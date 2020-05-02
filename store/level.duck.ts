@@ -15,16 +15,33 @@ const initialState: State = {
 
 export const Act = {
   registerLevel: (uid: string, init: LevelStateInit) =>
-    createAct('[Level] register level', { uid, ...init }),
+    createAct('[Level] register', { uid, ...init }),
   updateLevel: (uid: string, updates: Partial<LevelState>) =>
-    createAct('[Level] update level', { uid, updates }),
+    createAct('[Level] update', { uid, updates }),
   unregisterLevel: (uid: string) =>
-    createAct('[Level] unregister level', { uid }),
+    createAct('[Level] unregister', { uid }),
 };
 
 export type Action = ActionsUnion<typeof Act>;
 
 export const Thunk = {
+  addCuboid: createThunk(
+    '[Level] add mesh',
+    ({ state: { level } }, { levelUid, meshName, bounds, position }: {
+      levelUid: string;
+      meshName: string;
+      bounds: BABYLON.Vector3;
+      position: BABYLON.Vector3;
+    }) => {
+      const { scene } = level.instance[levelUid];
+      const mesh = BABYLON.MeshBuilder.CreateBox(meshName, {
+        width: bounds.x,
+        height: bounds.y,
+        depth: bounds.z,
+      }, scene);
+      mesh.position = position;
+    },
+  ),
   createLevel: createThunk(
     '[Level] create',
     async ({ dispatch }, { uid, canvas }: {
@@ -33,7 +50,7 @@ export const Thunk = {
     }) => {
       const engine = new BABYLON.Engine(canvas, true, {
         preserveDrawingBuffer: true,
-        stencil: true
+        stencil: true,
       });
       const scene = createDemoScene(canvas, engine);
       // Start rendering
@@ -44,6 +61,13 @@ export const Thunk = {
         engine: redact(engine),
         scene: redact(scene),
       }));
+    },
+  ),
+  removeMesh: createThunk(
+    '[Level] remove mesh',
+    ({ state: { level } }, { levelUid, meshName }: { levelUid: string; meshName: string }) => {
+      const { scene } = level.instance[levelUid];
+      scene.getMeshByName(meshName)?.dispose();
     },
   ),
   destroyLevel: createThunk(
@@ -61,13 +85,13 @@ export type Thunk = ActionsUnion<typeof Thunk>;
 
 export const reducer = (state = initialState, act: Action): State => {
   switch (act.type) {
-    case '[Level] register level': return {...state,
+    case '[Level] register': return {...state,
       instance: addToLookup(createLevelState(act.pay.uid, act.pay), state.instance),
     };
-    case '[Level] update level': return { ...state,
+    case '[Level] update': return { ...state,
       instance: updateLookup(act.pay.uid, state.instance, () => act.pay.updates),
     };
-    case '[Level] unregister level': return { ...state,
+    case '[Level] unregister': return { ...state,
       instance: removeFromLookup(act.pay.uid, state.instance),
     };
     default: return state || testNever(act);

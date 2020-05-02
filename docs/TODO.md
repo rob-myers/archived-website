@@ -1,6 +1,6 @@
+
 # TODO
 
-- can register cuboids in redux and the scene updates
 - can add/remove cuboids to scene via binary `mesh`
 
 - Get background builtins working e.g. `source foo <>fifo &`.
@@ -280,3 +280,4 @@
   > https://doc.babylonjs.com/how_to/using_offscreen_canvas
   Decided against: unsupported on Firefox/Safari and adds overhead e.g. resize/control
 - removed level worker
+- can register cuboids in redux and the scene updates

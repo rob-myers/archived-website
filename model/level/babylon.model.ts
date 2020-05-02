@@ -18,6 +18,9 @@ export function createDemoScene(canvas: HTMLCanvasElement, engine: BABYLON.Engin
   const sphere = BABYLON.Mesh.CreateSphere('sphere-1', 16, 2, scene, false, BABYLON.Mesh.FRONTSIDE);
   sphere.position.y = 1;
 
+  const cube = BABYLON.MeshBuilder.CreateBox('box-1', { width: 1,  height: 1, depth: 1 }, scene);
+  cube.position = new BABYLON.Vector3(0, 0, -5);
+
   const ground = BABYLON.Mesh.CreateGround('ground-1', 6, 6, 2, scene, false);
   const groundMaterial = new BABYLON.StandardMaterial('material-1', scene);
   groundMaterial.ambientColor = new BABYLON.Color3(1, 0, 0);
