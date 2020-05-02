@@ -7,7 +7,6 @@ import rootReducer, { LevelWorkerAction, LevelWorkerState, LevelWorkerThunk } fr
 import { composeWithDevTools } from 'remote-redux-devtools';
 import { Redacted, replacer } from '@model/redux.model';
 import { LevelState } from '@model/level/level.model';
-import { LevelAuxState } from '@model/level/level-aux.model';
 
 const thunkMiddleware =
   (worker: LevelWorkerContext) =>
@@ -33,7 +32,6 @@ const persistedReducer = persistReducer({
       (_, _key): LevelWorkerState['level'] => {
         return {
           instance: {},
-          aux: {},
         };
       },
       (state, _key) => ({
@@ -85,6 +83,3 @@ persistor.pause(); // We save manually
 
 export const getLevel = (levelUid: string) =>
   store.getState().level.instance[levelUid] as LevelState | undefined;
-
-export const getLevelAux = (levelUid: string) =>
-  store.getState().level.aux[levelUid] as LevelAuxState | undefined;

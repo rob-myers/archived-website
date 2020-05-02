@@ -1,11 +1,10 @@
 import { hot } from 'react-hot-loader/root';
 import withRedux from '@store/with-redux';
-import Level from '@components/level/level';
 
 const Demo3Page: React.FC = () => {
   return (
     <div style={{ width: '100%', height: 60 * 8 }}>
-      <Level uid="level-1" />
+      Babylon goes here
     </div>
   );
 };
