@@ -30,8 +30,9 @@ const BabylonComponent: React.FC<Props> = ({
       engine.current!.stopRenderLoop();
       dispatch(Thunk.destroyLevel({ uid }));
     };
-  }, []);
-  // }, [uid]);
+  }, [
+    uid
+  ]);
 
   return (
     <canvas

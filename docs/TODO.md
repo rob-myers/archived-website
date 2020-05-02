@@ -1,102 +1,30 @@
 # TODO
 
-- `door` is 3d door linking to another polygon
-- 3d icons via textured planes
-- actor will be cuboid too
-
-- floor decals via `icon`: dashed box, letters/digits
-
-- have camera modes `free`, `follow`
-- can set camera target via pseudo-tag `@`
-
-- Compute 'viewable ViewGraph' for raycasting
-- For debugging, can cast nav-ray/sight-ray between two metas.
-
-- Can find metas outside navigable but on table
-  i.e. triggers (rect/circ) intersecting navigable
+- can add/remove cuboids to scene via binary `mesh`
 
 - Get background builtins working e.g. `source foo <>fifo &`.
-  Know that `{ source foo <>fifo; } &` works.
+  `{ source foo <>fifo; } &` already works.
 
 - shell signals
-- implement `kill` with `SIGSTOP`, `SIGCONT`, `SIGINT,` `SIGTERM`
-- `fg` puts process into foreground
-- for `goto` intend `STOP`/`CONT` to pause/continue animations
-- can pause entire session -- but how to pause a `sleep`?
-  - if finishes make it sleep the 'difference' and immediately pause it
-
-- describe level editor features
-- why `wallSeg` is independent of `tileFloors`
-  i.e. walls can cut out another polygon
-- Provide outline of documentation e.g. nav, ray, triggers etc.
-
-- can trigger circle moving along path via CSS
-  - adding tag `@bob>foo` spawns bob and sends him to some meta tagged `foo`
-  - clicking on `bob` pauses/resumes animation
-  - actors exist in `LevelAuxState`
-
-- saving and loading levels
-  - only concerned with level data i.e. geometry + metas
-  - `@dev` we'll add an endpoint to webpack-dev-server which saves/loads json
-  - `@dev` also have 'branches' of a save which are saved/loaded via redux-persist
-  - branches only exist locally; json-saves are part of website
-  - `@prod` can only save/load branches (no server available)
-  - `@{dev,prod}` however can serialise branches so can comment
-  - could start from another's branch, but serialise as delta from json -save
-
-- `Level` has prop `deviceId` and `levelId`.
-- can save level as text in development via webpack-dev-server
-- can load level from json file
-- level `levelId` loaded from json file on mount `Level`
-- can save _branches_ of a level `${levelid}.${branch}` via redux-persist
-- can stringify/parse branches within ui (so can send as comments)
-- edit/live mode
-
-- saving and loading scripts (UNDECIDED)
-  - could provide `/sbin/level-1/onload.sh`
-  - users could save scripts to `/home/user/`
-
-- Directional lights via masks
-- tests for shell i.e. given env and command should provide output
-
-- Concerning future implementation of `goto`:
-  - takes many integer or empty params `4 '' -3 5 ...` 
-  - consumes two-at-a-time and simply goes to point
-  - can specify ease-in/out or similar
-  - completes once respective animation is complete
-  - suspending it pauses animation
-  - when reads from stdout runs each line one-by-one
-
-- actors have position and direction
-- can `look`: metas within radius, ray-cast
-
-- start implementing `LevelINode`
-- each `Level` has corresponding `LevelINode` at `/dev/level-${deviceId}/`
-- can `click 2 | nav | goto`.
-
-- get pan-zoom working in safari
+  - implement `kill` with `SIGSTOP`, `SIGCONT`, `SIGINT,` `SIGTERM`
+  - `fg` puts process into foreground
+  - for `goto` intend `STOP`/`CONT` to pause/continue animations
+  - can pause entire session -- but how to pause a `sleep`?
+    - if finishes make it sleep the 'difference' and immediately pause it
+  - can bring bg process to foreground
 
 - implement tab completion
 - implement `jq` using jq-web
 - implement `find` (basic version)
 
-- can bring bg process to foreground
-
-- warn about missing messages from worker after timeout
-
 - start using mdx for blogs
-- integrate gitalk from older branch
-- delete older branch
-- merge this branch `fresh-start-2020` into new branch `dev`.
+- integrate gitalk from branch `with-gitment`
 
 - `exec`
-- prevent execution if command not found
-- handle error `exec <( sleep 2; echo foo; sleep 2 )`
+  - prevent execution if command not found
+  - handle error `exec <( sleep 2; echo foo; sleep 2 )`
 
-- try lighting via SVG filter:
-  - each light poly can be restricted via circle and `feComposite`,
-    and possibly made into a spotlight.
-  - one filter per floor polygon
+- healthcheck for workers
 
 ## So far
 

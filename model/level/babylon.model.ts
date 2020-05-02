@@ -7,7 +7,10 @@ export function createDemoScene(canvas: HTMLCanvasElement, engine: BABYLON.Engin
   camera.setTarget(Vector3.ZeroReadOnly);
   camera.attachControl(canvas);
 
-  const _light = new BABYLON.HemisphericLight('light-1', Vector3.UpReadOnly, scene);
+  const hemiLight = new BABYLON.HemisphericLight('light-1', Vector3.UpReadOnly, scene);
+  const _pointLight = new BABYLON.PointLight('light-2', Vector3.FromArray([0, 5, -2]), scene, );
+  hemiLight.intensity = 0.7;
+
   const sphere = BABYLON.Mesh.CreateSphere('sphere-1', 16, 2, undefined, false, BABYLON.Mesh.FRONTSIDE);
   sphere.position.y = 1;
   const ground = BABYLON.Mesh.CreateGround('ground-1', 6, 6, 2, undefined, false);
