@@ -1,13 +1,25 @@
-/** Stored inside level web worker. */
-export interface LevelState {
+import { Redacted } from '@model/redux.model';
+import * as BABYLON from 'babylonjs';
+
+/** Stored inside main thread. */
+export interface LevelState extends LevelStateInit {
   key: string;
-  /**
-   * Level geometry
-   */
 }
 
-export function createLevelState(uid: string): LevelState {
+export interface LevelStateInit {
+  canvas: Redacted<HTMLElement>;
+  engine: Redacted<BABYLON.Engine>;
+  scene: Redacted<BABYLON.Scene>;
+}
+
+export function createLevelState(
+  levelUid: string,
+  { canvas, engine, scene }: LevelStateInit
+): LevelState {
   return {
-    key: uid,
+    key: levelUid,
+    canvas,
+    engine,
+    scene,
   };
 }

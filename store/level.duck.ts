@@ -1,26 +1,25 @@
-import { createAct, ActionsUnion, Redacted, redact } from '@model/redux.model';
-import { LevelWorker, awaitWorker } from '@model/level/level.worker.model';
+import * as BABYLON from 'babylonjs';
+import { createAct, ActionsUnion, addToLookup, updateLookup, removeFromLookup, Redacted, redact } from '@model/redux.model';
 import { createThunk } from '@model/root.redux.model';
-
-import LevelWorkerClass from '@worker/level/level.worker';
-import { testNever } from '@model/generic.model';
+import { testNever, KeyedLookup } from '@model/generic.model';
+import { LevelState, createLevelState, LevelStateInit } from '@model/level/level.model';
+import { createDemoScene } from '@model/level/babylon.model';
 
 export interface State {
-  worker: null | Redacted<LevelWorker>;
-  /** Status of web worker */
-  status: 'initial' | 'pending' | 'ready' | 'failed';
+  instance: KeyedLookup<LevelState>;
 }
 
 const initialState: State = {
-  worker: null,
-  status: 'initial',
+  instance: {},
 };
 
 export const Act = {
-  setStatus: (status: State['status']) =>
-    createAct('[Level] set status', { status }),
-  storeWorker: (worker: Redacted<LevelWorker>) =>
-    createAct('[Level] store worker', { worker }),
+  registerLevel: (uid: string, init: LevelStateInit) =>
+    createAct('[Level] register level', { uid, ...init }),
+  updateLevel: (uid: string, updates: Partial<LevelState>) =>
+    createAct('[Level] update level', { uid, updates }),
+  unregisterLevel: (uid: string) =>
+    createAct('[Level] unregister level', { uid }),
 };
 
 export type Action = ActionsUnion<typeof Act>;
@@ -28,46 +27,32 @@ export type Action = ActionsUnion<typeof Act>;
 export const Thunk = {
   createLevel: createThunk(
     '[Level] create',
-    async ({ dispatch }, { uid }: { uid: string }) => {
-      const worker = await dispatch(Thunk.ensureWorker({}));
-      worker.postMessage({ key: 'request-new-level', levelUid: uid });
-      await awaitWorker('worker-created-level', worker);
+    async ({ dispatch }, { uid, canvas }: {
+      uid: string;
+      canvas: Redacted<HTMLCanvasElement>;
+    }) => {
+      const engine = new BABYLON.Engine(canvas, true, {
+        preserveDrawingBuffer: true,
+        stencil: true
+      });
+      const scene = createDemoScene(canvas, engine);
+      // Start rendering
+      engine.runRenderLoop(() => scene.render());
+
+      dispatch(Act.registerLevel(uid, {
+        canvas,
+        engine: redact(engine),
+        scene: redact(scene),
+      }));
     },
   ),
   destroyLevel: createThunk(
     '[Level] destroy',
-    async ({ dispatch }, { uid }: { uid: string }) => {
-      const worker = await dispatch(Thunk.ensureWorker({}));
-      worker.postMessage({ key: 'request-destroy-level', levelUid: uid });
-    },
-  ),
-  ensureWorker: createThunk(
-    '[Level] ensure worker',
-    async ({ dispatch, state: { level } }) => {
-      if (typeof Worker === 'undefined') {
-        dispatch(Act.setStatus('failed'));
-      }
-      switch (level.status) {
-        case 'failed': {
-          throw Error('web worker required');
-        }
-        case 'initial': {
-          dispatch(Act.setStatus('pending'));
-          const worker = new LevelWorkerClass();
-          dispatch(Act.storeWorker(redact(worker)));
-          await awaitWorker('level-worker-ready', worker);
-          dispatch(Act.setStatus('ready'));
-          return worker;
-        }
-        case 'pending': {
-          const worker = level.worker!;
-          await awaitWorker('level-worker-ready', worker);
-          return worker;
-        }
-        case 'ready': {
-          return level.worker!;
-        }
-      }
+    async ({ dispatch, state: { level } }, { uid }: { uid: string }) => {
+      const { engine, scene } = level.instance[uid];
+      engine.stopRenderLoop();
+      scene.dispose();
+      dispatch(Act.unregisterLevel(uid));
     },
   ),
 };
@@ -76,11 +61,14 @@ export type Thunk = ActionsUnion<typeof Thunk>;
 
 export const reducer = (state = initialState, act: Action): State => {
   switch (act.type) {
-    case '[Level] set status': return { ...state,
-      status: act.pay.status,
+    case '[Level] register level': return {...state,
+      instance: addToLookup(createLevelState(act.pay.uid, act.pay), state.instance),
     };
-    case '[Level] store worker': return { ...state,
-      worker: act.pay.worker,
+    case '[Level] update level': return { ...state,
+      instance: updateLookup(act.pay.uid, state.instance, () => act.pay.updates),
+    };
+    case '[Level] unregister level': return { ...state,
+      instance: removeFromLookup(act.pay.uid, state.instance),
     };
     default: return state || testNever(act);
   }

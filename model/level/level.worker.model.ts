@@ -5,11 +5,11 @@ import { BaseMessage, Message } from '@model/worker.model';
 /** A Worker instance in parent thread. */
 export interface LevelWorker extends Worker {
   postMessage(message: MessageFromLevelParent): void;
+  postMessage(message: MessageFromLevelParent, transfer: Transferable[]): void;
   addEventListener(type: 'message', listener: (message: Message<MessageFromLevelWorker>) => void): void;
   addEventListener(type: 'message', object: EventListenerObject): void;
   removeEventListener(type: 'message', listener: (message: Message<MessageFromLevelWorker>) => void): void;
   removeEventListener(type: 'message', object: EventListenerObject): void;
-
 }
 
 /** A web worker. */
@@ -28,6 +28,7 @@ interface LevelWorkerReady extends BaseMessage {
 interface RequestNewLevel extends BaseMessage {
   key: 'request-new-level';
   levelUid: string;
+  canvas: OffscreenCanvas;
 }
 interface RequestDestroyLevel extends BaseMessage {
   key: 'request-destroy-level';

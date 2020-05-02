@@ -40,13 +40,13 @@ export const createOsThunk  = <
   Act extends OsThunkAct<T, Act['args'], R>,
   R = void
 >(type: T, thunk: Act['thunk']) => (args: Act['args']) =>
-    ({
-      type,
-      thunk,
-      args
-    } as Act);
+  ({
+    type,
+    thunk,
+    args
+  } as Act);
 
 export interface OsDispatchOverload {
-    <ActKey extends string = string, Payload = any>(action: SyncAct<ActKey, Payload>): void;
-    <ActKey extends string = string, ReturnValue = any>(action: OsThunkAct<ActKey, any, ReturnValue>): ReturnValue;
+  <ActKey extends string = string, Payload = any>(action: SyncAct<ActKey, Payload>): void;
+  <ActKey extends string = string, ReturnValue = any>(action: OsThunkAct<ActKey, any, ReturnValue>): ReturnValue;
 }

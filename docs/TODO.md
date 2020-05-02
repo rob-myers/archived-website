@@ -1,5 +1,6 @@
 # TODO
 
+- can register cuboids in redux and the scene updates
 - can add/remove cuboids to scene via binary `mesh`
 
 - Get background builtins working e.g. `source foo <>fifo &`.
@@ -275,3 +276,7 @@
 - metas with rect and height modifier induce cuboids
 - 3d walls have lower part
 - Add binary `mkfifo`
+- tried moving babylon engine to web worker
+  > https://doc.babylonjs.com/how_to/using_offscreen_canvas
+  Decided against: unsupported on Firefox/Safari and adds overhead e.g. resize/control
+- removed level worker
