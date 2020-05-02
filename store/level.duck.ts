@@ -26,6 +26,21 @@ export const Act = {
 export type Action = ActionsUnion<typeof Act>;
 
 export const Thunk = {
+  createLevel: createThunk(
+    '[Level] create',
+    async ({ dispatch }, { uid }: { uid: string }) => {
+      const worker = await dispatch(Thunk.ensureWorker({}));
+      worker.postMessage({ key: 'request-new-level', levelUid: uid });
+      await awaitWorker('worker-created-level', worker);
+    },
+  ),
+  destroyLevel: createThunk(
+    '[Level] destroy',
+    async ({ dispatch }, { uid }: { uid: string }) => {
+      const worker = await dispatch(Thunk.ensureWorker({}));
+      worker.postMessage({ key: 'request-destroy-level', levelUid: uid });
+    },
+  ),
   ensureWorker: createThunk(
     '[Level] ensure worker',
     async ({ dispatch, state: { level } }) => {

@@ -1,10 +1,11 @@
 import { hot } from 'react-hot-loader/root';
 import withRedux from '@store/with-redux';
+import BabylonComponent from '@components/babylon/babylon';
 
 const Demo3Page: React.FC = () => {
   return (
-    <div style={{ width: '100%', height: 60 * 8 }}>
-      Babylon goes here
+    <div>
+      <BabylonComponent uid="babylon-1"/>
     </div>
   );
 };

@@ -25,7 +25,10 @@
       "@worker/*": ["worker/*"],
       "@os-service/*": ["model/os/service/*"]
     },
-    "downlevelIteration": true
+    "downlevelIteration": true,
+    "types": [
+      "babylonjs"
+    ]
   },
   "exclude": [
     "node_modules"

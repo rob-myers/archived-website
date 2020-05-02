@@ -2,6 +2,7 @@
   "name": "rob-myers",
   "license": "MIT",
   "dependencies": {
+    "babylonjs": "^4.1.0",
     "cdt2d": "^1.0.0",
     "classnames": "^2.2.6",
     "cli-columns": "^3.1.2",
