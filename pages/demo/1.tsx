@@ -6,7 +6,7 @@ import BabylonComponent from '@components/babylon/babylon';
 const Demo1Page: React.FC = () => {
   return (
     <div>
-      <Session uid="demo-2" userKey="user" />
+      <Session uid="demo-2" userKey="rob" />
       <BabylonComponent uid="babylon-1"/>
     </div>
   );

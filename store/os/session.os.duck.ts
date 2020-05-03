@@ -8,7 +8,7 @@ import { State } from './os.duck';
 import { TtyINode } from '@store/inode/tty.inode';
 import { osForkProcessThunk, osCloseProcessFdsAct, osSetProcessGroupAct, osExecTermThunk, osStartProcessThunk, osTerminateProcessThunk } from './process.os.duck';
 import { osOpenFileThunk, osUnlinkFileThunk } from './file.os.duck';
-import { osSetProcessUserThunk } from './user.os.duck';
+import { osSetProcessUserThunk, osCreateUserThunk } from './user.os.duck';
 import { ensureArrayItem, last, testNever } from '@model/generic.model';
 import { isInteractiveShell, findAncestralTerm, isBash } from '@os-service/term.util';
 
@@ -198,14 +198,14 @@ export type Thunk = (
  */
 export const osCreateSessionThunk = createOsThunk<OsAct, CreateSessionThunk>(
   OsAct.OS_CREATE_SESSION_THUNK,
-  ({ dispatch, service }, { uiKey, userKey }) => {
+  ({ dispatch, service, state }, { uiKey, userKey }) => {
 
-    const { canonicalPath, sessionKey, iNode: ttyINode } = dispatch(osCreateTtyThunk({
-      userKey,
-    }));
-    /**
-     * Fork 'init', close fds, open tty at std{in,out,err}, set environment HOME, PWD etc.
-     */
+    // Ensure user (not a prerequisite)
+    !state.os.user[userKey] && dispatch(osCreateUserThunk({ userKey, groupKeys: [] }));
+
+    // Create TTY device
+    const { canonicalPath, sessionKey, iNode: ttyINode } = dispatch(osCreateTtyThunk({ userKey }));
+    // Fork 'init', close fds, open tty at std{in,out,err}, set environment HOME, PWD etc.
     const processKey = `bash.${sessionKey}`;
     dispatch(osForkProcessThunk({ parentKey: 'init', processKey }));
     dispatch(osCloseProcessFdsAct({ processKey }));
@@ -213,31 +213,21 @@ export const osCreateSessionThunk = createOsThunk<OsAct, CreateSessionThunk>(
     dispatch(osOpenFileThunk({ processKey, request: { path: canonicalPath, mode: 'WRONLY' } }));
     dispatch(osOpenFileThunk({ processKey, request: { path: canonicalPath, mode: 'WRONLY' } }));
     dispatch(osSetProcessUserThunk({ processKey, userKey }));
-    /**
-     * Register new session.
-     */
+    
+    // Register new session
     const processGroupKey = processKey;
     dispatch(osRegisterSessionAct({ uiKey: uiKey, processKey, processGroupKey, sessionKey, ttyINode, ttyPath: canonicalPath, userKey }));
-    /**
-     * Controlling process has own process group.
-     */
+    
+    // Controlling process has own process group and runs interactive bash
     dispatch(osSetProcessGroupAct({ processKey, processGroupKey }));
-    /**
-     * Controlling process should run interactive bash.
-     */
-    // const bashTerm = new BashBinary({ key: CompositeType.binary, binaryKey: BinaryExecType.bash, args: [] });
     const bashTerm = service.term.createBinary({ binaryKey: BinaryExecType.bash, args: []});
     dispatch(osExecTermThunk({ processKey, term: bashTerm, command: '-bash' }));
-    /**
-     * Start controlling process.
-     */
     dispatch(osStartProcessThunk({ processKey }));
 
     return { sessionKey, canonicalPath };
   },
 );
-interface CreateSessionThunk extends OsThunkAct<OsAct,
-{
+interface CreateSessionThunk extends OsThunkAct<OsAct, {
   /** So can close session on ui close, if needed */
   uiKey: string;
   userKey: string;
