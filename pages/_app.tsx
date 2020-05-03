@@ -33,10 +33,7 @@ class MyApp extends App<Props> {
     const { Component, pageProps, reduxStore } = this.props;
     return (
       <Provider store={reduxStore}>
-        <PersistGate
-          loading={<Component {...pageProps} />}
-          persistor={this.persistor}
-        >
+        <PersistGate persistor={this.persistor}>
           <ToastProvider>
             <Head>
               <link rel="shortcut icon" href="/favicon.ico" />
