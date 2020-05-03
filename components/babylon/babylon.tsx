@@ -1,6 +1,7 @@
 import { useRef, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import * as BABYLON from 'babylonjs';
+
 import { Thunk } from '@store/level.duck';
 import { redact } from '@model/redux.model';
 import usePageVisibility from '@components/page-visible/page-visible';
@@ -12,18 +13,19 @@ const BabylonComponent: React.FC<Props> = ({ uid }) => {
   const pageVisible = usePageVisibility();
 
   useEffect(() => {
-    dispatch(Thunk.createLevel({ uid, canvas: redact(canvasEl.current!) }));
-    dispatch(Thunk.addCuboid({ // TEST
-      levelUid: uid,
-      bounds: new BABYLON.Vector3(1, 1, 1),
-      meshName: 'my-test-cube',
-      position: new BABYLON.Vector3(0, 3, 0),
-    }));
+    dispatch(Thunk.createLevel({ uid, canvas: redact(canvasEl.current!) })).then(() => {
+      // dispatch(Thunk.addCuboid({ // TEST
+      //   levelUid: uid,
+      //   bounds: new BABYLON.Vector3(1, 1, 1),
+      //   meshName: 'my-test-cube',
+      //   position: new BABYLON.Vector3(0, 3, 0),
+      // }));
+    });
     return () => {
       dispatch(Thunk.destroyLevel({ uid }));
     };
   }, [
-    uid
+    uid,
   ]);
 
   useEffect(() => {

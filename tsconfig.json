@@ -27,7 +27,8 @@
     },
     "downlevelIteration": true,
     "types": [
-      "babylonjs"
+      "babylonjs",
+      "babylonjs-loaders"
     ]
   },
   "exclude": [

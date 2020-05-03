@@ -1,9 +1,8 @@
 # TODO
 
-- start doc concerning _space scavenger setting_
-
-- can add/remove cuboids to scene via binary `mesh`
+- can import from blender via plugin
 - can import from blender via `getobj`
+- can add/remove cuboids to scene via binary `mesh`
 
 - Get background builtins working e.g. `source foo <>fifo &`.
   `{ source foo <>fifo; } &` already works.
@@ -278,3 +277,5 @@
   Decided against: unsupported on Firefox/Safari and adds overhead e.g. resize/control
 - removed level worker
 - can register cuboids in redux and the scene updates
+- start doc concerning _space scavenger setting_
+- can import from blender via `gltf` files

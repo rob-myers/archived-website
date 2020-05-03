@@ -3,7 +3,7 @@ import { createAct, ActionsUnion, addToLookup, updateLookup, removeFromLookup, R
 import { createThunk } from '@model/root.redux.model';
 import { testNever, KeyedLookup } from '@model/generic.model';
 import { LevelState, createLevelState, LevelStateInit, LevelOptionCommand } from '@model/level/level.model';
-import { createDemoScene } from '@model/level/babylon.model';
+import { createDemoScene, loadObjIntoScene as loadGtlfIntoScene } from '@model/level/babylon.model';
 
 export interface State {
   instance: KeyedLookup<LevelState>;
@@ -44,15 +44,19 @@ export const Thunk = {
   ),
   createLevel: createThunk(
     '[Level] create',
-    ({ dispatch }, { uid, canvas }: {
+    async ({ dispatch, state: { level } }, { uid, canvas }: {
       uid: string;
       canvas: Redacted<HTMLCanvasElement>;
     }) => {
+      if (level.instance[uid]) {// Avoid duplicate engines
+        dispatch(Thunk.destroyLevel({ uid }));
+      }
       const engine = new BABYLON.Engine(canvas, true, {
         preserveDrawingBuffer: true,
         stencil: true,
       });
       const scene = createDemoScene(canvas, engine);
+      await loadGtlfIntoScene(scene);
       dispatch(Act.registerLevel(uid, {
         canvas,
         engine: redact(engine),
@@ -64,9 +68,11 @@ export const Thunk = {
   destroyLevel: createThunk(
     '[Level] destroy',
     ({ dispatch, state: { level } }, { uid }: { uid: string }) => {
-      dispatch(Thunk.setLevelOption({ key: 'render', uid, shouldRender: false }));
-      level.instance[uid].scene.dispose();
-      dispatch(Act.unregisterLevel(uid));
+      if (level.instance[uid]) {
+        dispatch(Thunk.setLevelOption({ key: 'render', uid, shouldRender: false }));
+        level.instance[uid].scene.dispose();
+        dispatch(Act.unregisterLevel(uid));
+      }
     },
   ),
   removeMesh: createThunk(
@@ -79,6 +85,9 @@ export const Thunk = {
   setLevelOption: createThunk(
     '[Level] set option',
     ({ state: { level }, dispatch }, cmd: LevelOptionCommand) => {
+      if (!level.instance[cmd.uid]) {
+        return;
+      }
       const { engine, scene, rendering } = level.instance[cmd.uid];
       switch (cmd.key) {
         case 'render': {
