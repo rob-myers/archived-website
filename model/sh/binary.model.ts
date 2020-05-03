@@ -20,6 +20,7 @@ export enum BinaryExecType {
   grep= 'grep',
   head= 'head',
   ls= 'ls',
+  mesh= 'mesh',
   mkdir= 'mkdir',
   mkfifo= 'mkfifo',
   mv= 'mv',

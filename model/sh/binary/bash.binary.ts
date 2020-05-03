@@ -17,7 +17,6 @@ import { SigEnum } from '@model/os/process.model';
  * - only interactive if stdin a tty
  * - noniteractive if have non-empty operand (filepath)
  */
-
 export class BashBinary extends BaseBinaryComposite<BinaryExecType.bash> {
 
   public get children() {

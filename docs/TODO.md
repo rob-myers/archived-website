@@ -1,11 +1,10 @@
-
 # TODO
 
 - can add/remove cuboids to scene via binary `mesh`
+- can import from blender via `getobj`
 
 - Get background builtins working e.g. `source foo <>fifo &`.
   `{ source foo <>fifo; } &` already works.
-
 - shell signals
   - implement `kill` with `SIGSTOP`, `SIGCONT`, `SIGINT,` `SIGTERM`
   - `fg` puts process into foreground
@@ -13,18 +12,14 @@
   - can pause entire session -- but how to pause a `sleep`?
     - if finishes make it sleep the 'difference' and immediately pause it
   - can bring bg process to foreground
-
 - implement tab completion
 - implement `jq` using jq-web
 - implement `find` (basic version)
-
 - start using mdx for blogs
 - integrate gitalk from branch `with-gitment`
-
 - `exec`
   - prevent execution if command not found
   - handle error `exec <( sleep 2; echo foo; sleep 2 )`
-
 - healthcheck for workers
 
 ## So far
