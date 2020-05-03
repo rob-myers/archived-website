@@ -3,6 +3,7 @@
   "license": "MIT",
   "dependencies": {
     "babylonjs": "^4.1.0",
+    "babylonjs-loaders": "^4.1.0",
     "cdt2d": "^1.0.0",
     "classnames": "^2.2.6",
     "cli-columns": "^3.1.2",
@@ -89,6 +90,7 @@
     "node-sass": "^4.13.1",
     "optimize-css-assets-webpack-plugin": "^5.0.3",
     "postcss-loader": "^3.0.0",
+    "raw-loader": "^4.0.1",
     "react-hot-loader": "4.12.19",
     "react-test-renderer": "16.12.0",
     "redux-devtools-extension": "2.13.8",

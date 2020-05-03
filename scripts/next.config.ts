@@ -4,7 +4,7 @@ import webpackMerge from 'webpack-merge';
 import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
 import nextConst from 'next/constants';
 import configStyles from './styles.config';
-import configImage from './image.config';
+import configFiles from './files.config';
 
 const production = process.env.NODE_ENV === 'production';
 console.log({ production });
@@ -82,7 +82,7 @@ export default (
           ]
         } : {},
         configStyles(options),
-        configImage(options),
+        configFiles(options),
       );
     }
   };
