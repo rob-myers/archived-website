@@ -2,7 +2,7 @@ import * as BABYLON from 'babylonjs';
 import { createAct, ActionsUnion, addToLookup, updateLookup, removeFromLookup, Redacted, redact } from '@model/redux.model';
 import { createThunk } from '@model/root.redux.model';
 import { testNever, KeyedLookup } from '@model/generic.model';
-import { LevelState, createLevelState, LevelStateInit } from '@model/level/level.model';
+import { LevelState, createLevelState, LevelStateInit, LevelOptionCommand } from '@model/level/level.model';
 import { createDemoScene } from '@model/level/babylon.model';
 
 export interface State {
@@ -44,7 +44,7 @@ export const Thunk = {
   ),
   createLevel: createThunk(
     '[Level] create',
-    async ({ dispatch }, { uid, canvas }: {
+    ({ dispatch }, { uid, canvas }: {
       uid: string;
       canvas: Redacted<HTMLCanvasElement>;
     }) => {
@@ -53,14 +53,20 @@ export const Thunk = {
         stencil: true,
       });
       const scene = createDemoScene(canvas, engine);
-      // Start rendering
-      engine.runRenderLoop(() => scene.render());
-
       dispatch(Act.registerLevel(uid, {
         canvas,
         engine: redact(engine),
         scene: redact(scene),
       }));
+      dispatch(Thunk.setLevelOption({ key: 'render', uid, shouldRender: true }));
+    },
+  ),
+  destroyLevel: createThunk(
+    '[Level] destroy',
+    ({ dispatch, state: { level } }, { uid }: { uid: string }) => {
+      dispatch(Thunk.setLevelOption({ key: 'render', uid, shouldRender: false }));
+      level.instance[uid].scene.dispose();
+      dispatch(Act.unregisterLevel(uid));
     },
   ),
   removeMesh: createThunk(
@@ -70,15 +76,20 @@ export const Thunk = {
       scene.getMeshByName(meshName)?.dispose();
     },
   ),
-  destroyLevel: createThunk(
-    '[Level] destroy',
-    async ({ dispatch, state: { level } }, { uid }: { uid: string }) => {
-      const { engine, scene } = level.instance[uid];
-      engine.stopRenderLoop();
-      scene.dispose();
-      dispatch(Act.unregisterLevel(uid));
+  setLevelOption: createThunk(
+    '[Level] set option',
+    ({ state: { level }, dispatch }, cmd: LevelOptionCommand) => {
+      const { engine, scene, rendering } = level.instance[cmd.uid];
+      switch (cmd.key) {
+        case 'render': {
+          cmd.shouldRender && !rendering && engine.runRenderLoop(() => scene.render());
+          !cmd.shouldRender && engine.stopRenderLoop();
+          dispatch(Act.updateLevel(cmd.uid, { rendering: cmd.shouldRender }));
+          break;
+        }
+      }
     },
-  ),
+  )
 };
 
 export type Thunk = ActionsUnion<typeof Thunk>;

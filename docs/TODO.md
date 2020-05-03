@@ -1,5 +1,7 @@
 # TODO
 
+- start doc concerning _space scavenger setting_
+
 - can add/remove cuboids to scene via binary `mesh`
 - can import from blender via `getobj`
 

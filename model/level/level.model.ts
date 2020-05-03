@@ -4,6 +4,7 @@ import * as BABYLON from 'babylonjs';
 /** Stored inside main thread. */
 export interface LevelState extends LevelStateInit {
   key: string;
+  rendering: boolean;
 }
 
 export interface LevelStateInit {
@@ -21,5 +22,12 @@ export function createLevelState(
     canvas,
     engine,
     scene,
+    rendering: false,
   };
 }
+
+export type LevelOptionCommand = {
+  uid: string;
+} & (
+  | { key: 'render'; shouldRender: boolean }
+);
