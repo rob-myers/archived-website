@@ -1,52 +1,77 @@
 import * as BABYLON from 'babylonjs';
-import { Vector3 } from 'babylonjs';
+import { Vector3, Light, IShadowLight } from 'babylonjs';
 import 'babylonjs-loaders';
-import roomTestGltf from './gltf/room-test.gltf';
+import cubeTestGltf from './gltf/cube-test.gltf';
+import { CustomCameraKeyboardInput } from './babylon-input.model';
 
-export function createDemoScene(canvas: HTMLCanvasElement, engine: BABYLON.Engine): BABYLON.Scene {
-  const scene = new BABYLON.Scene(engine);
-  scene.clearColor = new BABYLON.Color4(0, 0, 0, 0);
-  scene.ambientColor = new BABYLON.Color3(1, 1, 1);
+export const babylonEngineParams: BABYLON.EngineOptions = {
+  preserveDrawingBuffer: true,
+  stencil: true,
+  // antialias: true,
+};
 
-  const camera = new BABYLON.FreeCamera(
-    'freecam-1',
-    new Vector3(0, 10, 0),
-    scene,
-  );
-  camera.setTarget(Vector3.ZeroReadOnly);
-  camera.attachControl(canvas);
+export async function loadSceneFromGtlf(
+  engine: BABYLON.Engine,
+  canvas: HTMLCanvasElement,
+) {
+  BABYLON.SceneLoader.ShowLoadingScreen = false;
+  try {
+    const scene = await BABYLON.SceneLoader.LoadAsync('', `data:${cubeTestGltf}`, engine);
+    scene.clearColor = new BABYLON.Color4(0, 0, 0, 0);
 
-  const hemiLight = new BABYLON.HemisphericLight('light-1', Vector3.UpReadOnly, scene);
-  hemiLight.intensity = 0.4;
-  const pointLight = new BABYLON.PointLight('light-2', Vector3.FromArray([0, 5, 0]), scene, );
-  pointLight.intensity = 0.4;
+    const ground = scene.getMeshByName('ground');
+    if (ground) {
+      ground.receiveShadows = true;
+    }
+    // const walls = scene.meshes.filter(m => m.material?.name === 'white');
 
-  const sphere = BABYLON.Mesh.CreateSphere('sphere-1', 16, 2, scene, false, BABYLON.Mesh.FRONTSIDE);
-  sphere.position = new BABYLON.Vector3(0, 1, -2);
+    scene.lights.forEach((light) => {
+      switch (light.getTypeID()) {
+        case Light.LIGHTTYPEID_DIRECTIONALLIGHT: {
+          // light.intensity = 1;
+          // light.specular = new BABYLON.Color3(1, 0, 0);
+          // light.diffuse = new BABYLON.Color3(1, 0, 0);
+          // const shadowGenerator = new BABYLON.ShadowGenerator(128, light as IShadowLight);
+          // shadowGenerator.useBlurExponentialShadowMap = true;
+          // scene.meshes.forEach(mesh => shadowGenerator.addShadowCaster(mesh));
+          // shadowGenerator.getShadowMap()!.refreshRate = BABYLON.RenderTargetTexture.REFRESHRATE_RENDER_ONCE;
+          break;
+        }
+        case Light.LIGHTTYPEID_SPOTLIGHT: {
+          light.intensity *= 0.1;
+          const shadowGenerator = new BABYLON.ShadowGenerator(1024, light as IShadowLight);
+          // shadowGenerator.forceBackFacesOnly = true;
+          shadowGenerator.bias = 0.00001;
+          const shadowMap = shadowGenerator.getShadowMap()!;
+          // walls.forEach(mesh => shadowMap.renderList!.push(mesh));
+          scene.meshes.forEach(mesh => shadowMap.renderList!.push(mesh));
+          shadowMap.refreshRate = BABYLON.RenderTargetTexture.REFRESHRATE_RENDER_ONCE;
+          break;
+        }
+        case Light.LIGHTTYPEID_POINTLIGHT: {
+          break;
+        }
+      }
+    });
 
-  const cube = BABYLON.MeshBuilder.CreateBox('box-1', { width: 1,  height: 1, depth: 1 }, scene);
-  cube.position = new Vector3(0, 0, -5);
 
-  const ground = BABYLON.Mesh.CreateGround('ground-1', 6, 6, 2, scene, false);
-  const groundMaterial = new BABYLON.StandardMaterial('material-1', scene);
-  groundMaterial.ambientColor = new BABYLON.Color3(1, 0, 0);
-  ground.material = groundMaterial;
+    const camera = new BABYLON.UniversalCamera('uni-cam', new Vector3(0, 10, 0), scene);
+    camera.setTarget(Vector3.Zero());
+    camera.minZ = 0;
+    camera.attachControl(canvas);
 
-  return scene;
+    setInputs(camera);
+
+    return scene;
+  } catch (error) {
+    console.log({ error });
+    return new BABYLON.Scene(engine);
+  }
 }
 
-export async function loadObjIntoScene(scene: BABYLON.Scene) {
-  try {
-    await new Promise((resolve) => {
-      BABYLON.SceneLoader.ShowLoadingScreen = false;
-      // BABYLON.SceneLoader.LoadAssetContainer('', `data:${roomTestGltf}`, scene, function (loadedContainer) {
-      BABYLON.SceneLoader.Append('', `data:${roomTestGltf}`, scene, function (_scene) {
-        // do something with the scene
-        // console.log({ loadedContainer });
-        resolve();
-      });
-    });
-  } catch (e) {
-    console.log({ e });
-  }
+function setInputs(camera: BABYLON.UniversalCamera) {
+  camera.inputs.removeMouse();
+  camera.inputs.removeByType('FreeCameraKeyboardMoveInput');
+  camera.inputs.add(new CustomCameraKeyboardInput(camera));
+  // TODO add zoom
 }

@@ -3,7 +3,7 @@ import { createAct, ActionsUnion, addToLookup, updateLookup, removeFromLookup, R
 import { createThunk } from '@model/root.redux.model';
 import { testNever, KeyedLookup } from '@model/generic.model';
 import { LevelState, createLevelState, LevelStateInit, LevelOptionCommand } from '@model/level/level.model';
-import { createDemoScene, loadObjIntoScene as loadGtlfIntoScene } from '@model/level/babylon.model';
+import { loadSceneFromGtlf, babylonEngineParams } from '@model/level/babylon.model';
 
 export interface State {
   instance: KeyedLookup<LevelState>;
@@ -51,12 +51,8 @@ export const Thunk = {
       if (level.instance[uid]) {// Avoid duplicate engines
         dispatch(Thunk.destroyLevel({ uid }));
       }
-      const engine = new BABYLON.Engine(canvas, true, {
-        preserveDrawingBuffer: true,
-        stencil: true,
-      });
-      const scene = createDemoScene(canvas, engine);
-      await loadGtlfIntoScene(scene);
+      const engine = new BABYLON.Engine(canvas, true, babylonEngineParams);
+      const scene = await loadSceneFromGtlf(engine, canvas);
       dispatch(Act.registerLevel(uid, {
         canvas,
         engine: redact(engine),

@@ -261,7 +261,7 @@ interface EndSessionThunk extends OsThunkAct<OsAct, { sessionKey: string }, void
 }
 
 /**
- * Signal foreground process-group in specified session.
+ * Signal foreground process group in specified session.
  * Foreground group either:
  * - has 1st process as interactive bash.
  * - is a set of binaries in a pipeline spawned by bash.
