@@ -40,7 +40,7 @@ export class LiteralExpand extends BaseExpandComposite<ExpandType.literal> {
         this.value = value.replace(/\\(.|$)/g, '$1');
       } else {
         /**
-         * Otherwise: escape everything, apply brace-expansion.
+         * Otherwise apply brace-expansion.
          */
         this.values = braces.expand(value);
       }

@@ -120,13 +120,15 @@ export class AssignComposite extends BaseCompositeTerm<CompositeType.assign> {
          */
         const values = [] as string[];
         let index = 0;
-        pairs.map(({ key, value: { value }}) => {
-          index = key && (
-            (key.key === CompositeType.expand && (parseInt(key.value) || 0))
-            || (key.key === CompositeType.arithm_op && (key.value || 0))
-          ) || index;
-          values[index] = value;
-          index++;
+        pairs.map(({ key, value: { values: innerValues }}) => {
+          innerValues.forEach(value => {
+            index = key && (
+              (key.key === CompositeType.expand && (parseInt(key.value) || 0))
+              || (key.key === CompositeType.arithm_op && (key.value || 0))
+            ) || index;
+            values[index] = value;
+            index++;
+          });
         });
 
         if (this.def.append) {

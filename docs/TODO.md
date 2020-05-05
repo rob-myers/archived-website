@@ -280,3 +280,4 @@
   > https://github.com/BabylonJS/BlenderExporter/issues/20
 - can import from blender via `gltf`
 - basic lighting + shadows working
+- `x=({a..e})` should have 5 elements
