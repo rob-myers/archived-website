@@ -1,13 +1,13 @@
 import * as BABYLON from 'babylonjs';
 import { Vector3, Light, IShadowLight } from 'babylonjs';
 import 'babylonjs-loaders';
-import cubeTestGltf from './gltf/cube-test.gltf';
+import shadowTest1Gltf from './gltf/shadow-test-1.gltf';
 import { CustomCameraKeyboardInput } from './babylon-input.model';
 
 export const babylonEngineParams: BABYLON.EngineOptions = {
   preserveDrawingBuffer: true,
   stencil: true,
-  // antialias: true,
+  antialias: true,
 };
 
 export async function loadSceneFromGtlf(
@@ -16,7 +16,7 @@ export async function loadSceneFromGtlf(
 ) {
   BABYLON.SceneLoader.ShowLoadingScreen = false;
   try {
-    const scene = await BABYLON.SceneLoader.LoadAsync('', `data:${cubeTestGltf}`, engine);
+    const scene = await BABYLON.SceneLoader.LoadAsync('', `data:${shadowTest1Gltf}`, engine);
     scene.clearColor = new BABYLON.Color4(0, 0, 0, 0);
 
     const ground = scene.getMeshByName('ground');
@@ -40,10 +40,8 @@ export async function loadSceneFromGtlf(
         case Light.LIGHTTYPEID_SPOTLIGHT: {
           light.intensity *= 0.1;
           const shadowGenerator = new BABYLON.ShadowGenerator(1024, light as IShadowLight);
-          // shadowGenerator.forceBackFacesOnly = true;
-          shadowGenerator.bias = 0.00001;
+          shadowGenerator.bias = 0.00001; // Important
           const shadowMap = shadowGenerator.getShadowMap()!;
-          // walls.forEach(mesh => shadowMap.renderList!.push(mesh));
           scene.meshes.forEach(mesh => shadowMap.renderList!.push(mesh));
           shadowMap.refreshRate = BABYLON.RenderTargetTexture.REFRESHRATE_RENDER_ONCE;
           break;
@@ -73,5 +71,4 @@ function setInputs(camera: BABYLON.UniversalCamera) {
   camera.inputs.removeMouse();
   camera.inputs.removeByType('FreeCameraKeyboardMoveInput');
   camera.inputs.add(new CustomCameraKeyboardInput(camera));
-  // TODO add zoom
 }
