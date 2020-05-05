@@ -768,9 +768,9 @@ export class TermService {
               case ParamType.default:
                 return `\${${param}${def.colon ? `:${def.symbol}${this.src(def.alt)}` : ''}}`;
               case ParamType.keys:
-                return `\${!${param}[${def.split ? '@' : '*'}]}`;
+                return `\${!${def.param}[${def.split ? '@' : '*'}]}`;
               case ParamType.length:
-                return `\${${param}}${def.of === 'values' ? '[@]' : ''}`;
+                return `\${#${def.param}${def.of === 'values' ? '[@]' : ''}}`;
               case ParamType.plain:
                 return `\${${param}}`;
               case ParamType.pointer:

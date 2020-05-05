@@ -65,6 +65,8 @@ export class ProcessVarService {
         if (v.value) {
           if (value !== undefined) {
             v.value[parseInt(key) || 0] = parseInt(value) || 0;
+          } else {
+            delete v.value[parseInt(key) || 0];
           }
         } else {
           v.value = value === undefined ? [] : [parseInt(value) || 0];
@@ -75,6 +77,8 @@ export class ProcessVarService {
         v.value = v.value || [];
         if (value !== undefined) {
           v.value[parseInt(key) || 0] = value;
+        } else {
+          delete v.value[parseInt(key) || 0];
         }
         v.value = this.transformVar(v.to, v.value) as string[];
         break;
@@ -83,6 +87,8 @@ export class ProcessVarService {
         if (v.value) {
           if (value !== undefined) {
             v.value[key] = parseInt(value) || 0;
+          } else {
+            delete v.value[parseInt(key) || 0];
           }
         } else {
           v.value = value === undefined ? {} : { [key]: parseInt(value) || 0 };
@@ -93,6 +99,8 @@ export class ProcessVarService {
         if (v.value) {
           if (value !== undefined) {
             v.value[key] = value;
+          } else {
+            delete v.value[key];
           }
         } else {
           v.value = value === undefined ? {} : { [key]: value };

@@ -12,6 +12,8 @@ import { osUpdateProcessAct } from './process.os.duck';
 import { TermError } from '@os-service/term.util';
 import { Term } from '@model/os/term.model';
 
+const varNameRegex = /^[a-z_][a-z0-9_]*$/i;
+
 export type Action = (
   | AddFunctionAct
   | PopRedirectScopeAct
@@ -368,7 +370,7 @@ export const osAssignVarThunk = createOsThunk<OsAct, AssignVarThunk>(
     /**
      * Require alphanumeric variable name, where 1st char non-numeric.
      */
-    if (!/^[a-z_][a-z0-9_]*$/i.test(varName || '')) {
+    if (!varNameRegex.test(varName || '')) {
       throw new TermError(`\`${varName}' not a valid identifier`, 1);
     }
     /**
@@ -769,37 +771,50 @@ interface RestrictToEnvThunk extends OsThunkAct<OsAct, { processKey: string; pos
 /**
  * Unset a variable, if exists.
  * We replace leftmost occurrence with var of type 'unset'.
- * Then can {local x=foo; unset x} without effecting earlier {x}.
+ * Then can `local x=foo; unset x` without effecting earlier `x`.
+ * Can also unset an indexed variable.
  */
 export const osUnsetVarThunk = createOsThunk<OsAct, UnsetVarThunk>(
   OsAct.OS_UNSET_VAR_THUNK,
   ({ dispatch, state: { os } }, { processKey, varName }) => {
     const { nestedVars } = os.proc[processKey];
-    const index = nestedVars.findIndex((toVar) => varName in toVar);
 
-    if (index === -1) {// Skip if variable n'exist pas.
-      return;
-    }
-    const prevVar = nestedVars[index][varName];
-    if (prevVar.key === 'positional') {// Cannot unset positional.
-      return;
+    if (varName.includes('[')) {
+      const arrayName = varName.slice(0, varName.indexOf('['));
+      const arrayKey = varName.slice(varName.indexOf('[') + 1, -1);
+
+      dispatch(osAssignVarThunk({
+        processKey,
+        varName: arrayName,
+        act: { key: 'item', index: arrayKey, value: undefined },
+      }));
+    } else {
+      const index = nestedVars.findIndex((toVar) => varName in toVar);
+      if (index === -1) {
+        return;
+      }
+      const prevVar = nestedVars[index][varName];
+      if (prevVar.key === 'positional') {
+        return; // Cannot unset positional.
+      }
+  
+      dispatch(osUpdateProcessAct({ processKey, updater: ({ nestedVars }) => ({
+        nestedVars: [
+          ...nestedVars.slice(0, index),
+          { ...nestedVars[index],
+            [varName]: {
+              key: 'unset',
+              varName,
+              value: null,
+              exported: false,
+              readonly: false,
+              to: null,
+            }},
+          ...nestedVars.slice(index + 1),
+        ]}),
+      }));
     }
 
-    dispatch(osUpdateProcessAct({ processKey, updater: ({ nestedVars }) => ({
-      nestedVars: [
-        ...nestedVars.slice(0, index),
-        { ...nestedVars[index],
-          [varName]: {
-            key: 'unset',
-            varName,
-            value: null,
-            exported: false,
-            readonly: false,
-            to: null,
-          }},
-        ...nestedVars.slice(index + 1),
-      ]}),
-    }));
   },
 );
 interface UnsetVarThunk extends OsThunkAct<OsAct, { processKey: string; varName: string }, void> {

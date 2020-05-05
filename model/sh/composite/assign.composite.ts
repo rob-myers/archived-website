@@ -104,7 +104,6 @@ export class AssignComposite extends BaseCompositeTerm<CompositeType.assign> {
          * Associative array via {declare -A}.
          * We also forward {this.associative} flag via {baseAssignOpts}.
          */
-        
         const value = {} as Record<string, string>; // Even if integer-valued
         for (const { key, value: v } of pairs) {
           if (!key) {
