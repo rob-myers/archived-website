@@ -80,14 +80,12 @@ export class TailBinary extends BaseBinaryComposite<
   }
 
   private async *tailRegular(numLines: number, dispatch: OsDispatchOverload, processKey: string): AsyncIterableIterator<ObservedType> {
-    /**
-     * Move open-file offset to {data.length - numLines}.
-     */
+    //  Move open-file offset to {data.length - numLines}
     const { key: openKey, offset, iNode } =  dispatch(osGetOfdThunk({ processKey, fd: 0 }));
     const delta = -offset + ((iNode as RegularINode).data.length - numLines);
     dispatch(osOffsetOpenAct({ openKey, delta }));
 
-    while (yield this.read(10, 0)) {
+    while (yield this.read(defaultMaxLines, 0)) {
       yield this.write();
     }
   }
