@@ -3,7 +3,7 @@ import { BaseBinaryComposite } from './base-binary';
 import { ObservedType } from '@os-service/term.service';
 import { OsDispatchOverload } from '@model/os/os.redux.model';
 import { osOpenFileThunk, osGetOfdThunk } from '@store/os/file.os.duck';
-import { VoiceCommandSpeech } from '@model/xterm/voice.xterm';
+import { VoiceCommandSpeech } from '@model/client/voice.client';
 import { INodeType } from '@store/inode/base-inode';
 import { osSetSignalHandlerAct } from '@store/os/process.os.duck';
 import { SigEnum } from '@model/os/process.model';

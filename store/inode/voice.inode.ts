@@ -1,5 +1,5 @@
 import { BaseINode, INodeType, BaseINodeDef } from './base-inode';
-import { VoiceCommandSpeech } from '@model/xterm/voice.xterm';
+import { VoiceCommandSpeech } from '@model/client/voice.client';
 
 export class VoiceINode extends BaseINode {
 

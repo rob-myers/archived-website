@@ -1,18 +1,18 @@
 import { createAct, ActionsUnion, addToLookup, removeFromLookup, Redacted, redact } from '../model/redux.model';
 import { KeyedLookup } from '@model/generic.model';
-import { XTermState, createXTermState, computeXtermKey } from '@model/xterm/xterm.model';
+import { XTermState, createXTermState, computeXtermKey } from '@model/client/xterm.model';
 import { createThunk } from '@model/root.redux.model';
 import { OsWorker, awaitWorker } from '@model/os/os.worker.model';
 
 import OsWorkerClass from '@worker/os/os.worker';
-import { TtyXterm } from '../model/xterm/tty.xterm';
+import { XtermClient } from '../model/client/xterm.client';
 import { Terminal } from 'xterm';
-import { VoiceXterm } from '@model/xterm/voice.xterm';
+import { VoiceClient } from '@model/client/voice.client';
 
 export interface State {
   instance: KeyedLookup<XTermState>;
   worker: null | Redacted<OsWorker>;
-  voice: null | VoiceXterm;
+  voice: null | VoiceClient;
   /** Is the operating system ready in the worker? */
   status: 'initial' | 'pending' | 'ready' | 'failed';
 }
@@ -31,7 +31,7 @@ export const Act = {
     createAct('[xterm] set status', { status }),
   storeWorker: ({ worker, voice }: {
     worker: Redacted<OsWorker>;
-    voice: Redacted<VoiceXterm>;
+    voice: Redacted<VoiceClient>;
   }) =>
     createAct('[xterm] store worker', { worker, voice }),
   unregisterInstance: (key: string) =>
@@ -54,7 +54,7 @@ export const Thunk = {
         case 'initial': {
           dispatch(Act.setStatus('pending'));
           const worker = redact(new OsWorkerClass);
-          const voice = redact(new VoiceXterm({ osWorker: worker }));
+          const voice = redact(new VoiceClient({ osWorker: worker }));
           voice.initialise();
           dispatch(Act.storeWorker({ voice, worker }));
           
@@ -93,7 +93,7 @@ export const Thunk = {
       const msg = await awaitWorker('created-session', worker, (msg) => msg.uiKey === uiKey);
 
       // Create TtyXterm, initialise and register
-      const ttyXterm = new TtyXterm({
+      const ttyXterm = new XtermClient({
         canonicalPath: msg.canonicalPath,
         sessionKey: msg.sessionKey,
         linesPerUpdate: 10000,

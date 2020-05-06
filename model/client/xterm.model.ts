@@ -1,4 +1,4 @@
-import { TtyXterm } from '@model/xterm/tty.xterm';
+import { XtermClient } from '@model/client/xterm.client';
 
 /**
  * Maximum lines we can scrollback in xterm.
@@ -11,7 +11,7 @@ export interface XTermState {
   uiKey: string;
   userKey: string;
   sessionKey: string;
-  ttyXterm: TtyXterm;
+  ttyXterm: XtermClient;
 }
 
 export function createXTermState(init: XTermState): XTermState {

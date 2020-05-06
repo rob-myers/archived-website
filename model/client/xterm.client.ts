@@ -3,7 +3,7 @@ import { Terminal } from 'xterm';
 import { testNever } from '@model/generic.model';
 import { Redacted } from '@model/redux.model';
 import { SigEnum } from '@model/os/process.model';
-import { BaseOsBridge, BaseOsBridgeDef } from './base-os-bridge';
+import { BaseOsClient, BaseOsBridgeDef } from './base-os-client';
 import { Message } from '@model/worker.model';
 import { xtermScrollbackMaxLines } from './xterm.model';
 
@@ -11,7 +11,7 @@ import { xtermScrollbackMaxLines } from './xterm.model';
  * Wrapper around XTerm.Terminal which communicates
  * with a TtyINode in the OS web worker.
  */
-export class TtyXterm extends BaseOsBridge<TtyXtermDef> {
+export class XtermClient extends BaseOsClient<TtyXtermDef> {
   /**
    * e.g. write a line, clear the screen. They are induced
    * by user input and/or processes in the respective session.

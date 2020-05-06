@@ -1,5 +1,5 @@
 import { SigEnum } from './process.model';
-import { VoiceCommandSpeech } from '@model/xterm/voice.xterm';
+import { VoiceCommandSpeech } from '@model/client/voice.client';
 import { BaseMessage, Message } from '@model/worker.model';
 
 /** Worker in parent thread */

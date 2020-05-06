@@ -17,7 +17,7 @@ import { NullINode } from '@store/inode/null.inode';
 import { RandomINode } from '@store/inode/random.inode';
 import { RegularINode } from '@store/inode/regular.inode';
 import { VoiceINode } from '@store/inode/voice.inode';
-import { VoiceCommandSpeech } from '@model/xterm/voice.xterm';
+import { VoiceCommandSpeech } from '@model/client/voice.client';
 import { awaitParent } from '@model/os/os.worker.model';
 
 export type Action = (
