@@ -803,7 +803,7 @@ export class TermService {
           }
           case ExpandType.singleQuote: {// Need $$ for literal $
             const inner = term.def.value.replace(/\n/g, '$$\'\\n\'');
-            return term.def.interpret ? `$'${inner}'` : inner;
+            return `${term.def.interpret ? '$' : ''}'${inner}'`;
           }
           default: throw testNever(term);
         }
@@ -913,8 +913,10 @@ export class TermService {
       }
       case IteratorType.while: {
         // guard and body are always SeqComposite
-        return `while ${this.seqSrc(term.def.guard.children, true)}do ${
-          this.seqSrc(term.def.body.children, true)
+        return `while ${this.seqSrc(term.def.guard.children, true)}do${
+          term.def.body.children.length
+            ? ` ${this.seqSrc(term.def.body.children, true)}`
+            : '; '
         }done`;
       }
       default: throw testNever(term);
