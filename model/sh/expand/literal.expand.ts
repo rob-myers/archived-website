@@ -1,5 +1,4 @@
 import braces from 'braces';
-
 import { BaseExpandComposite, BaseExpandCompositeDef } from './base-expand';
 import { ExpandType } from '../expand.model';
 import { ObservedType } from '@os-service/term.service';
@@ -42,7 +41,7 @@ export class LiteralExpand extends BaseExpandComposite<ExpandType.literal> {
         /**
          * Otherwise apply brace-expansion.
          */
-        this.values = braces.expand(value);
+        this.values = braces(value, { expand: true, rangeLimit: Infinity });
       }
     }
   }
