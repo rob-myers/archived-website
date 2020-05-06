@@ -3,7 +3,7 @@ import { useDispatch } from 'react-redux';
 import dynamic from 'next/dynamic';
 import { Thunk } from '@store/xterm.duck';
 import { redact } from '@model/redux.model';
-import { computeXtermKey } from '@model/xterm/xterm.model';
+import { computeXtermKey, xtermScrollbackMaxLines } from '@model/xterm/xterm.model';
 import css from './session.scss';
 
 import XTermComponent from './xterm';
@@ -54,6 +54,7 @@ export const Session: React.FC<Props> = ({ uid, userKey }) => {
             background: 'black',
             foreground: '#41FF00',
           },
+          scrollback: xtermScrollbackMaxLines,
         }}
       />
     </section>
