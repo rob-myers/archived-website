@@ -6,11 +6,13 @@ import { RegularINode } from '@store/inode/regular.inode';
 import { FifoINode } from '@store/inode/fifo.inode';
 import { VoiceINode } from '@store/inode/voice.inode';
 import { HistoryINode } from '@store/inode/history.inode';
+import { LevelINode } from '@store/inode/level.inode';
 
 export type INode = (
   | DirectoryINode
   | FifoINode
   | HistoryINode
+  | LevelINode
   | NullINode
   | RegularINode
   | RandomINode

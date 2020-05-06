@@ -3,7 +3,7 @@ import { Terminal } from 'xterm';
 import { testNever } from '@model/generic.model';
 import { Redacted } from '@model/redux.model';
 import { SigEnum } from '@model/os/process.model';
-import { BaseOsClient, BaseOsBridgeDef } from './base-os-client';
+import { BaseOsClient, BaseOsClientDef } from './base-os-client';
 import { Message } from '@model/worker.model';
 import { xtermScrollbackMaxLines } from './xterm.model';
 
@@ -679,7 +679,7 @@ export class XtermClient extends BaseOsClient<TtyXtermDef> {
   }
 }
 
-interface TtyXtermDef extends BaseOsBridgeDef {
+interface TtyXtermDef extends BaseOsClientDef {
   uiKey: string;
   xterm: Redacted<Terminal>;
   sessionKey: string;

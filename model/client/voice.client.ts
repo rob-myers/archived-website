@@ -1,6 +1,6 @@
 import { Redacted, redact } from '@model/redux.model';
 import { MessageFromOsWorker } from '@model/os/os.worker.model';
-import { BaseOsClient, BaseOsBridgeDef } from './base-os-client';
+import { BaseOsClient, BaseOsClientDef } from './base-os-client';
 import { Message } from '@model/worker.model';
 
 /**
@@ -139,6 +139,6 @@ type VoiceCommand = (
   | VoiceCommandResolve
 );
 
-interface VoiceXtermDef extends BaseOsBridgeDef {
+interface VoiceXtermDef extends BaseOsClientDef {
   defaultVoice?: string;
 }

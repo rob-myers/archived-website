@@ -121,6 +121,9 @@ export function rehydrateFilesystem(inode: INode, parent: null | DirectoryINode)
     case INodeType.history: {
       return new HistoryINode({ ...inode.def }, inode.history.slice());
     }
+    case INodeType.level: {
+      throw Error('level inodes should never be rehydrated');
+    }
     case INodeType.null: {
       return new NullINode({ ...inode.def });
     }

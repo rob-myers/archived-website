@@ -1,7 +1,7 @@
 import { OsWorker, MessageFromOsWorker } from '@model/os/os.worker.model';
 import { Message } from '@model/worker.model';
 
-export abstract class BaseOsClient<Def extends BaseOsBridgeDef> {
+export abstract class BaseOsClient<Def extends BaseOsClientDef> {
 
   constructor(protected def: Def) {}
   
@@ -17,6 +17,6 @@ export abstract class BaseOsClient<Def extends BaseOsBridgeDef> {
   protected abstract onWorkerMessage(data: Message<MessageFromOsWorker>): void;
 }
 
-export interface BaseOsBridgeDef {
+export interface BaseOsClientDef {
   osWorker: OsWorker;
 }
