@@ -38,14 +38,13 @@ interface ClearTtyThunk extends OsThunkAct<OsAct, { processKey: string }, void> 
  */
 export const osCreateTtyThunk = createOsThunk<OsAct, CreateTtyThunk>(
   OsAct.OS_CREATE_TTY_THUNK,
-  ({ dispatch, state: { os }, worker } ) => {
+  ({ dispatch, state: { os }, worker }, { userKey }) => {
 
     const { nextTtyId } = os.aux;
     const canonicalFilename = `tty-${nextTtyId}`;
     const canonicalPath = `/dev/${canonicalFilename}`;
     // const sessionKey = `${userKey}@${canonicalFilename}`;
     const sessionKey = canonicalFilename;
-    const userKey = 'user'; // TODO
 
     // Expects history at /home/{userKey}/.history
     const historyINode = ((os.root.to.home as DirectoryINode)
