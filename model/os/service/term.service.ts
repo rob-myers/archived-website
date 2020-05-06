@@ -92,7 +92,8 @@ import { CoprocComposite } from '@model/sh/composite/coproc.composite';
 import { ExprBinary } from '@model/sh/binary/expr.binary';
 import { KillBuiltin } from '@model/sh/builtin/kill.builtin';
 import { MkFifoBinary } from '@model/sh/binary/mkfifo.binary';
-import { MeshBinary } from '@model/sh/binary/mesh.binary';
+import { FloorBinary } from '@model/sh/binary/floor.binary';
+import { WallBinary } from '@model/sh/binary/wall.binary';
 
 export type ObservedType = (
   | undefined
@@ -208,7 +209,7 @@ export class TermService {
           case BinaryExecType.grep: return new GrepBinary(term.def);
           case BinaryExecType.head: return new HeadBinary(term.def);
           case BinaryExecType.ls: return new LsBinary(term.def);
-          case BinaryExecType.mesh: return new MeshBinary(term.def);
+          case BinaryExecType.floor: return new FloorBinary(term.def);
           case BinaryExecType.mkdir: return new MkdirBinary(term.def);
           case BinaryExecType.mkfifo: return new MkFifoBinary(term.def);
           case BinaryExecType.mv: return new MvBinary(term.def);
@@ -221,6 +222,7 @@ export class TermService {
           case BinaryExecType.sleep: return new SleepBinary(term.def);
           case BinaryExecType.tail: return new TailBinary(term.def);
           case BinaryExecType.tty: return new TtyBinary(term.def);
+          case BinaryExecType.wall: return new WallBinary(term.def);
           case BinaryExecType.wc: return new WcBinary(term.def);
           default: throw testNever(term);
         }
@@ -510,7 +512,7 @@ export class TermService {
       case BinaryExecType.grep: return new GrepBinary({ key: CompositeType.binary, binaryKey, args });
       case BinaryExecType.head: return new HeadBinary({ key: CompositeType.binary, binaryKey, args });
       case BinaryExecType.ls: return new LsBinary({ key: CompositeType.binary, binaryKey, args });
-      case BinaryExecType.mesh: return new MeshBinary({ key: CompositeType.binary, binaryKey, args });
+      case BinaryExecType.floor: return new FloorBinary({ key: CompositeType.binary, binaryKey, args });
       case BinaryExecType.mkdir: return new MkdirBinary({ key: CompositeType.binary, binaryKey, args });
       case BinaryExecType.mkfifo: return new MkFifoBinary({ key: CompositeType.binary, binaryKey, args });
       case BinaryExecType.mv: return new MvBinary({ key: CompositeType.binary, binaryKey, args });
@@ -523,6 +525,7 @@ export class TermService {
       case BinaryExecType.seq: return new SeqBinary({ key: CompositeType.binary, binaryKey, args });
       case BinaryExecType.tail: return new TailBinary({ key: CompositeType.binary, binaryKey, args });
       case BinaryExecType.tty: return new TtyBinary({ key: CompositeType.binary, binaryKey, args });
+      case BinaryExecType.wall: return new WallBinary({ key: CompositeType.binary, binaryKey, args });
       case BinaryExecType.wc: return new WcBinary({ key: CompositeType.binary, binaryKey, args });
       case BuiltinOtherType.echo: return new EchoBuiltin({ key: CompositeType.builtin, builtinKey: binaryKey, args });
       case BuiltinOtherType.pwd: return new PwdBuiltin({ key: CompositeType.builtin, builtinKey: binaryKey, args });

@@ -1,6 +1,5 @@
 # TODO
 
-- create empty binaries `floor` and `wall`
 - create `level.inode` and `level.client`
 - can add floors and walls to specified level via binaries
 
@@ -284,3 +283,4 @@
 - basic lighting + shadows working
 - `x=({a..e})` should have 5 elements
 - rename `voice.xterm` as `voice.client`
+- create empty binaries `floor` and `wall`

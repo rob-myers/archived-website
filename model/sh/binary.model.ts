@@ -20,7 +20,7 @@ export enum BinaryExecType {
   grep= 'grep',
   head= 'head',
   ls= 'ls',
-  mesh= 'mesh',
+  floor= 'floor',
   mkdir= 'mkdir',
   mkfifo= 'mkfifo',
   mv= 'mv',
@@ -33,6 +33,7 @@ export enum BinaryExecType {
   seq= 'seq',
   tail= 'tail',
   tty= 'tty',
+  wall= 'wall',
   wc= 'wc',
 }
 

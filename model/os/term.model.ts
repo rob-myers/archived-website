@@ -86,7 +86,8 @@ import { CoprocComposite } from '@model/sh/composite/coproc.composite';
 import { ExprBinary } from '@model/sh/binary/expr.binary';
 import { KillBuiltin } from '@model/sh/builtin/kill.builtin';
 import { MkFifoBinary } from '@model/sh/binary/mkfifo.binary';
-import { MeshBinary } from '@model/sh/binary/mesh.binary';
+import { FloorBinary } from '@model/sh/binary/floor.binary';
+import { WallBinary } from '@model/sh/binary/wall.binary';
 
 export type Term = (
   // | LeafTermJSON
@@ -109,7 +110,7 @@ export type BinaryComposite = (
   | GrepBinary
   | HeadBinary
   | LsBinary
-  | MeshBinary
+  | FloorBinary
   | MkdirBinary
   | MkFifoBinary
   | MvBinary
@@ -122,6 +123,7 @@ export type BinaryComposite = (
   | SleepBinary
   | TailBinary
   | TtyBinary
+  | WallBinary
   | WcBinary
 );
 
