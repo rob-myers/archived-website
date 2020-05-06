@@ -84,3 +84,7 @@ uniq() {
 }
 cat duplicates | uniq
 ```
+
+```sh
+echo {1..100},{1..500} | expr -m 'x => x.split(" ")'
+```

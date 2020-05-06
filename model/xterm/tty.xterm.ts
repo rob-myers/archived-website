@@ -5,6 +5,7 @@ import { Redacted } from '@model/redux.model';
 import { SigEnum } from '@model/os/process.model';
 import { BaseOsBridge, BaseOsBridgeDef } from './base-os-bridge';
 import { Message } from '@model/worker.model';
+import { xtermScrollbackMaxLines } from './xterm.model';
 
 /**
  * Wrapper around XTerm.Terminal which communicates
@@ -157,7 +158,6 @@ export class TtyXterm extends BaseOsBridge<TtyXtermDef> {
   private handleCursorErase(backspace: boolean) {
     const { cursor, input } = this;
     if (backspace) {
-      // console.log({ cursor });
       if (cursor <= 0) {
         return;
       }
@@ -378,7 +378,7 @@ export class TtyXterm extends BaseOsBridge<TtyXtermDef> {
   }
 
   /**
-   * Convert 0-based {cursor} in {input} to
+   * Convert 0-based `cursor` in `input` to
    * a relative 0-based col/row location.
    */
   private offsetToColRow(input: string, cursor: number) {
@@ -401,8 +401,6 @@ export class TtyXterm extends BaseOsBridge<TtyXtermDef> {
   }
 
   protected onWorkerMessage({ data: msg }: Message<MessageFromOsWorker>) {
-    // console.log({ receivedFromOsWorker: msg });
-
     switch (msg.key) {
       case 'set-xterm-prompt': {
         if (msg.sessionKey === this.def.sessionKey) {
@@ -424,8 +422,16 @@ export class TtyXterm extends BaseOsBridge<TtyXtermDef> {
             sessionKey: msg.sessionKey,
             messageUid: msg.messageUid,
           });
-          this.queueCommands(msg.lines.map(
-            line => ({ key: 'line' as 'line', line })));
+
+          this.queueCommands(
+            msg.lines
+              /**
+               * Limit lines to those viewable by user.
+               * Assume number of rows on screen not larger than scrollback.
+               */
+              .slice(-2 * xtermScrollbackMaxLines)
+              .map(line => ({ key: 'line' as 'line', line }))
+          );
         }
         return;
       }
@@ -489,7 +495,6 @@ export class TtyXterm extends BaseOsBridge<TtyXtermDef> {
       (command = this.commandBuffer.shift())
       && numLines <= this.def.linesPerUpdate
     ) {
-      // console.log({ command });
       switch (command.key) {
         case 'await-prompt': {
           this.commandBuffer.unshift(command);
@@ -617,15 +622,15 @@ export class TtyXterm extends BaseOsBridge<TtyXtermDef> {
 
   /**
    * Writes the input which may span over multiple lines.
-   * Updates {this.input}. Finishes with cursor at end of input.
+   * Updates `this.input`. Finishes with cursor at end of input.
    */
   private setInput(newInput: string) {
     this.setCursor(0); // Return to start of input.
     const realNewInput = this.actualLine(newInput);
     this.xterm.write(realNewInput);
     /**
-     * Right-edge detection uses {newInput} sans prompt.
-     * Use guard {realNewInput} to avoid case of blank line,
+     * Right-edge detection uses `newInput` sans prompt.
+     * Use guard `realNewInput` to avoid case of blank line,
      * arising from unguarded builtin 'read' when deleting.
      */
     if (realNewInput && this.inputEndsAtEdge(newInput)) {
