@@ -2,8 +2,6 @@
 
 - can add floors and walls to specified level via binaries
 
-- Get background builtins working e.g. `source foo <>fifo &`.
-  `{ source foo <>fifo; } &` already works.
 - shell signals
   - implement `kill` with `SIGSTOP`, `SIGCONT`, `SIGINT,` `SIGTERM`
   - `fg` puts process into foreground
@@ -287,3 +285,5 @@
 - fix history of other users
 - babylon component ensures level device `/dev/level-${levelName}`
 - `floor`, `wall` fail if `LEVEL_DEVICE` doesn't resolve as level.inode.
+- Get background builtins working e.g. `source foo <>fifo &`.
+  `{ source foo <>fifo; } &` already works.

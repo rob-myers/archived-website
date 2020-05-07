@@ -1,5 +1,5 @@
 import { BaseTermDef } from '../base-term';
-import { CompositeType, Term, ExpandComposite, SpecialBuiltin, OtherBuiltin } from '../../os/term.model';
+import { CompositeType, Term, ExpandComposite, SpecialBuiltin, OtherBuiltin, Builtin } from '../../os/term.model';
 import { AssignComposite, AssignDefVar } from './assign.composite';
 import { RedirectComposite } from './redirect.composite';
 import { BaseCompositeTerm } from './base-composite';
@@ -9,7 +9,7 @@ import { ExpandType } from '../expand.model';
 import { normalizeWhitespace, launchedInteractively, TermError } from '@os-service/term.util';
 import { osExpandFilepathThunk, osResolvePathThunk } from '@store/os/file.os.duck';
 import { osPushRedirectScopeAct, osPopRedirectScopeAct, osGetFunctionThunk, osPushVarScopeAct, osPopVarScopeAct } from '@store/os/declare.os.duck';
-import { osCloneTerm, osCreateBuiltinThunk, osCreateBinaryThunk, osGetHistoricalSrc } from '@store/os/parse.os.duck';
+import { osCloneTerm, osCreateBuiltinThunk, osGetHistoricalSrc, osCreateBinaryThunk } from '@store/os/parse.os.duck';
 import { isBuiltinSpecialCommand, isBuiltinOtherCommand, BuiltinSpecialType, BuiltinOtherType, isDeclareBuiltinType, BuiltinType } from '@model/sh/builtin.model';
 import { BinaryType } from '@model/sh/binary.model';
 import { INodeType } from '@store/inode/base-inode';
@@ -170,7 +170,6 @@ export class SimpleComposite extends BaseCompositeTerm<CompositeType.simple> {
     const [command] = this.args;
 
     if (isBuiltinSpecialCommand(command) || isBuiltinOtherCommand(command)) {
-      // this.log('Running builtin', { builtinKey, args });
       const args = this.args.slice(1);
       
       // Normalize commands to {BuiltinType}.
@@ -196,22 +195,25 @@ export class SimpleComposite extends BaseCompositeTerm<CompositeType.simple> {
       }
   
       try {
-        // Mount term.
+        // Mount term
         const builtin = dispatch(osCreateBuiltinThunk({ builtinKey, args }));
         this.method = { key: 'run-builtin', builtin };
         this.adoptChildren();
     
-        // Only '.' and 'source' need {this.def.assigns}.
+        // Only '.' and 'source' need `this.def.assigns`
         if (builtin.builtinKey === BuiltinSpecialType.period || builtin.builtinKey === BuiltinOtherType.source) {
           builtin.assigns = this.def.assigns;
         }
     
-        // Only 'exec' doesn't evaluate redirects now.
         if (builtin.builtinKey === BuiltinSpecialType.exec) {
           builtin.redirects = this.def.redirects;
           yield* this.runChild({ child: builtin, dispatch, processKey });
         } else {
-          yield* this.runChild({ child: builtin, dispatch, processKey}, { freshRedirs: this.def.redirects });
+          if (this.def.background) {
+            yield* this.launch({ key: 'builtin', type: builtin.builtinKey, builtin }, dispatch, processKey);
+          } else {
+            yield* this.runChild({ child: builtin, dispatch, processKey }, { freshRedirs: this.def.redirects });
+          }
         }
         yield this.exit(builtin.exitCode || 0);
       } catch (e) {
@@ -230,13 +232,13 @@ export class SimpleComposite extends BaseCompositeTerm<CompositeType.simple> {
 
       if (iNode.type === INodeType.regular) {
         if (iNode.binary) {
-          yield* this.launch(iNode.def.binaryType as BinaryType, dispatch, processKey);
+          yield* this.launch({ key: 'binary', type: iNode.def.binaryType as BinaryType }, dispatch, processKey);
         } else if (/^~|(\.?\/)/.test(this.args[0])) {
           /**
            * Only try to run script if path has prefix '~', './' or '/'.
            * Run script by launching builtin `source` in new process.
            */
-          yield* this.launch(BuiltinOtherType.source, dispatch, processKey);
+          yield* this.launch({ key: 'script', type: BuiltinOtherType.source }, dispatch, processKey);
         } else {
           /**
            * Regular file like 'foo' won't be executed even if script.
@@ -265,11 +267,20 @@ export class SimpleComposite extends BaseCompositeTerm<CompositeType.simple> {
     }
   }
 
-  private async *launch(binaryKey: BinaryType | BuiltinOtherType.source, dispatch: OsDispatchOverload, processKey: string): AsyncIterableIterator<ObservedType> {
-    // Key of process we'll launch.
-    const launchedKey = `${binaryKey}.${this.termId}.${processKey}`;
+  private async *launch(
+    kind: (
+      | { key: 'binary'; type: BinaryType }
+      | { key: 'script'; type: BuiltinOtherType.source }
+      | { key: 'builtin'; type: BuiltinType; builtin: Builtin }
+    ),
+    dispatch: OsDispatchOverload,
+    processKey: string,
+  ): AsyncIterableIterator<ObservedType> {
+
+    // Key of process we'll launch
+    const launchedKey = `${kind.type}.${this.termId}.${processKey}`;
     
-    if (binaryKey === BuiltinOtherType.source) {
+    if (kind.key === 'script') {
       this.method = { key: 'launch-script', launchedKey, filepath: this.args[0] };
       this.args.unshift(BuiltinOtherType.source);
     } else {
@@ -292,9 +303,7 @@ export class SimpleComposite extends BaseCompositeTerm<CompositeType.simple> {
     }
 
     if (this.def.assigns.length) {
-      /**
-       * Apply assignments here as locals.
-       */
+      // Apply assignments here as locals
       dispatch(osPushVarScopeAct({ processKey }));
       for (const assign of this.def.assigns) {
         assign.declOpts = { local: true };
@@ -307,18 +316,16 @@ export class SimpleComposite extends BaseCompositeTerm<CompositeType.simple> {
      * Ignore x[i]=. Moreover, array assignment can't happen.
      */
     const exportVars: SpawnChildDef['exportVars'] = this.def.assigns
-      .filter(({ def }) => def.subKey === 'var')
-      .map(({ def }) => {
+      .filter(({ def }) => def.subKey === 'var').map(({ def }) => {
         const { value } = def as AssignDefVar<ExpandComposite>;
-        return {
-          varName: def.varName,
-          varValue: value ? value.value : '',
-        };
+        return { varName: def.varName, varValue: value ? value.value : '' };
       });
 
-    const term = binaryKey === BuiltinOtherType.source
-      ? dispatch(osCreateBuiltinThunk({ builtinKey: binaryKey, args: this.args.slice(1) }))
-      : dispatch(osCreateBinaryThunk({ binaryKey, args: this.args.slice(1) }));
+    const term = kind.key === 'binary'
+      ? dispatch(osCreateBinaryThunk({ binaryKey: kind.type, args: this.args.slice(1) }))
+      : kind.key === 'script'
+        ? dispatch(osCreateBuiltinThunk({ builtinKey: kind.type, args: this.args.slice(1) }))
+        : kind.builtin;
 
     // Manufacture source and source map.
     term.def.src = this.args.join(' ');
@@ -329,18 +336,14 @@ export class SimpleComposite extends BaseCompositeTerm<CompositeType.simple> {
       extra: [],
     };
 
-    /**
-     * Spawn child process.
-     */
+    // Spawn child process
     const { toPromise } = dispatch(osSpawnChildThunk({
       processKey,
       childProcessKey: launchedKey,
       background: this.def.background,
+      subshell: kind.key === 'builtin' || kind.key === 'script',
       term,
-      /**
-       * Cannot use {this.def.redirects} here.
-       * They may refer to non-exported variables in the current process.
-       */
+      // Cannot use this.def.redirects e.g. may refer to non-exported vars
       redirects: [],
       /**
        * If launched interactively:
@@ -348,17 +351,11 @@ export class SimpleComposite extends BaseCompositeTerm<CompositeType.simple> {
        * - if not background, it'll be set as foreground process group.
        */
       specPgKey: launchedInteractively(this) ? launchedKey : undefined,
-      /**
-       * Arguments after command become +ve positional params in spawned process.
-       */
+      // Arguments after command become +ve positional params in spawned process
       posPositionals: this.args.slice(1),
-      /**
-       * Evaluated assignments will be exported in new process.
-       */
+      //  Evaluated assignments will be exported in new process
       exportVars,
-      /**
-       * Store launched command for `ps`, recalling that this.arg[0] is filepath.
-       */
+      // Store launched command for `ps`, recalling that this.arg[0] is filepath
       command: this.args
         .concat(this.def.redirects.map(r => dispatch(osGetHistoricalSrc({ term: r }))))
         .join(' '),
