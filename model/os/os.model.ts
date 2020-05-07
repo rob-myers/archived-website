@@ -175,7 +175,8 @@ export enum OsAct {
   OS_WRITE_WARNING= 'OS_WRITE_WARNING',
 
   //#region level
-  OS_ENSURE_LEVEL_THUNK= 'OS_ENSURE_LEVEL_THUNK',
+  OS_ENSURE_LEVEL_DEVICE_THUNK= 'OS_ENSURE_LEVEL_DEVICE_THUNK',
+  OS_GET_LEVEL_DEVICE_THUNK= 'OS_GET_LEVEL_DEVICE_THUNK',
   //#endregion
 }
 
@@ -255,3 +256,5 @@ export type GetOpts<
   & { [optName in Exclude<BooleanKey, '_' | StringKey>]: boolean; }
   & { '_': string[] }
 )
+
+export const levDevVarName = 'LEVEL_DEVICE';

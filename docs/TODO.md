@@ -286,3 +286,4 @@
 - create `level.inode` and `level.client`
 - fix history of other users
 - babylon component ensures level device `/dev/level-${levelName}`
+- `floor`, `wall` fail if `LEVEL_DEVICE` doesn't resolve as level.inode.
