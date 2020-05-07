@@ -284,3 +284,5 @@
 - rename `voice.xterm` as `voice.client`
 - create empty binaries `floor` and `wall`
 - create `level.inode` and `level.client`
+- fix history of other users
+- babylon component ensures level device `/dev/level-${levelName}`

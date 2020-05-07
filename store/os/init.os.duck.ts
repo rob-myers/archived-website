@@ -61,14 +61,15 @@ export type Thunk = (
 export const osInitializeThunk = createOsThunk<OsAct, OsInitializeThunk>(
   OsAct.OS_INITIALIZE_THUNK,
   ({ dispatch, state: { os: { root }}, worker }) => {
-    // Create user 'root' in user-group 'root'.
+    // Create user 'root' in user-group 'root'
     dispatch(osCreateUserThunk({ userKey: 'root', groupKeys: [] }));
 
-    // Ensure top-level directories e.g. /root, /dev, /home, /tmp.
+    // Ensure top-level directories e.g. /root, /dev, /home, /tmp
     for (const dirName of topLevelDirs.filter((dirname) => !root.to[dirname])) {
       root.addChild(dirName, root.createSubdir());
     }
-    // Ensure special inodes /dev/null, /dev/random.
+
+    // Ensure special inodes
     const dev = root.to.dev as DirectoryINode;
     if (!dev.to.null) {
       dev.addChild('null', new NullINode({ ...dev.def }));
@@ -94,12 +95,13 @@ export const osInitializeThunk = createOsThunk<OsAct, OsInitializeThunk>(
         },
       }));
     }
+
     // Ensure README in /root
     (root.to['root'] as DirectoryINode).addChild(
       'README',
       new RegularINode(root.to['root'].def, [
         '',
-        `${'\x1b[38;5;248;1m'}Javascript bash interpreter by Robert S. R. Myers${'\x1b[0m'}.`,
+        `${'\x1b[38;5;248;1m'}Javascript bash interpreter by Robert S. R. Myers${'\x1b[0m'}`,
         `${'\x1b[33m'}site${'\x1b[0m'}: https://rob-myers.github.io`,
         `${'\x1b[33m'}mail${'\x1b[0m'}: me.robmyers@gmail.com`,
         `Built using the excellent shell parser ${'\x1b[38m'}https://github.com/mvdan/sh${'\x1b[0m'}`,
@@ -109,13 +111,10 @@ export const osInitializeThunk = createOsThunk<OsAct, OsInitializeThunk>(
 
     // Ensure binaries in /bin
     const bin = root.to.bin as DirectoryINode;
-    [
-      ...binaryExecTypes,
-      // Some builtins have binaries.
+    [ ...binaryExecTypes,
+      // Some builtins have binaries
       ...builtinBinaryTypes,
-    ].sort().forEach((binaryType) =>
-      bin.addChild(binaryType, new RegularINode({ ...bin.def, binaryType })));
-
+    ].sort().forEach((binaryType) => bin.addChild(binaryType, new RegularINode({ ...bin.def, binaryType })));
     // Spawn the top-level process
     dispatch(osSpawnInitThunk({}));
     // Create user 'user' in user-group 'user'
@@ -140,7 +139,7 @@ export const osSpawnInitThunk = createOsThunk<OsAct, SpawnInitThunk>(
 
     const userKey = 'root';
     const processKey = 'init';
-    // The init process is never started, see TermService.compile.
+    // The init process is never started, see TermService.compile
     const term = service.transpileSh.transpile(service.parseSh.parse(''));
     const observable = service.term.compile({ term, dispatch, processKey });
 
@@ -158,12 +157,12 @@ export const osSpawnInitThunk = createOsThunk<OsAct, SpawnInitThunk>(
       toFunc: {},
     };
 
-    // init has session sans terminal.
+    // init has session sans terminal
     const sessionKey = 'root@init';
     dispatch(osRegisterSessionAct({
       uiKey: null,
       processKey,
-      // init will be in process group 'init'.
+      // init will be in process group 'init'
       processGroupKey: processKey,
       sessionKey,
       ttyINode: null,
@@ -171,7 +170,7 @@ export const osSpawnInitThunk = createOsThunk<OsAct, SpawnInitThunk>(
       userKey,
     }));
 
-    // Register init with state.
+    // Register init with state
     dispatch(osRegisterProcessAct({
       processKey,
       sessionKey,
@@ -181,7 +180,7 @@ export const osSpawnInitThunk = createOsThunk<OsAct, SpawnInitThunk>(
       fdToOpenKey: {},
     }));
 
-    // Open /dev/null at std{in,out,err}.
+    // Open /dev/null at std{in,out,err}
     const { fd } = dispatch(osOpenFileThunk({ processKey, request: { path: '/dev/null', mode: 'RDWR' }}));
     dispatch(osDupFileDescriptorAct({ processKey, srcFd: fd, dstFd: 1 }));
     dispatch(osDupFileDescriptorAct({ processKey, srcFd: fd, dstFd: 2 }));

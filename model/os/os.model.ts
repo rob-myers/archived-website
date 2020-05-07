@@ -173,6 +173,10 @@ export enum OsAct {
   OS_ABS_TO_INODE= 'OS_ABS_TO_INODE',
   OS_REGISTER_OPEN_FILE= 'OS_REGISTER_OPEN_FILE',
   OS_WRITE_WARNING= 'OS_WRITE_WARNING',
+
+  //#region level
+  OS_ENSURE_LEVEL_THUNK= 'OS_ENSURE_LEVEL_THUNK',
+  //#endregion
 }
 
 /**

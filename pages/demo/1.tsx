@@ -7,10 +7,10 @@ const Demo1Page: React.FC = () => {
   return (
     <div style={{ display: 'flex' }}>
       <div style={{ width: '50%' }}>
-        <Session uid="demo-2" userKey="rob" />
+        <Session uid="demo-1" userKey="rob" />
       </div>
       <div style={{ width: '50%' }}>
-        <BabylonComponent uid="babylon-1"/>
+        <BabylonComponent uid="demo-1"/>
       </div>
     </div>
   );

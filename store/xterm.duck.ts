@@ -32,8 +32,7 @@ export const Act = {
   storeWorker: ({ worker, voice }: {
     worker: Redacted<OsWorker>;
     voice: Redacted<VoiceClient>;
-  }) =>
-    createAct('[xterm] store worker', { worker, voice }),
+  }) => createAct('[xterm] store worker', { worker, voice }),
   unregisterInstance: (key: string) =>
     createAct('[xterm] unregister', { key }),
 };
@@ -53,7 +52,9 @@ export const Thunk = {
         }
         case 'initial': {
           dispatch(Act.setStatus('pending'));
+          /** One worker for operating system */
           const worker = redact(new OsWorkerClass);
+          /** One instance of voice (only one-voice-at-a-time possible) */
           const voice = redact(new VoiceClient({ osWorker: worker }));
           voice.initialise();
           dispatch(Act.storeWorker({ voice, worker }));

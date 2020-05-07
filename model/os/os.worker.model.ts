@@ -170,6 +170,11 @@ interface SaveOperatingSystem extends BaseMessage {
   key: 'save-os';
 }
 
+interface EnsureLevelDevice extends BaseMessage {
+  key: 'ensure-level-device';
+  levelName: string;
+}
+
 export type MessageFromOsParent = (
   | PingFromParent
   | SendLineToTty
@@ -182,6 +187,7 @@ export type MessageFromOsParent = (
   | SendAllVoices
   | RequestHistoryLine
   | SaveOperatingSystem
+  | EnsureLevelDevice
 );
   
 export type MessageFromOsWorker = (

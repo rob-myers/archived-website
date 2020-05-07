@@ -5,6 +5,7 @@ import Link from 'next/link';
 import css from './index.scss';
 
 const links = [
+  { label: 'Bash + Babylon.js', pathname: '/demo', query: { id: 1 } },
   { label: 'Bash in browser', pathname: '/demo', query: { id: 2 } },
   { label: '3d demo (Babylonjs)', pathname: '/demo', query: { id: 3 } },
 ];

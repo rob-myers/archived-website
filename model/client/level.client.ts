@@ -1,4 +1,4 @@
-import { MessageFromOsWorker } from '@model/os/os.worker.model';
+import { MessageFromOsWorker, awaitWorker } from '@model/os/os.worker.model';
 import { BaseOsClient, BaseOsClientDef } from './base-os-client';
 import { Message } from '@model/worker.model';
 
@@ -9,6 +9,14 @@ export class LevelClient extends BaseOsClient<LevelClientDef> {
 
   constructor(protected def: LevelClientDef) {
     super(def);
+  }
+
+  public async initialise() {
+    super.initialise();
+    this.def.osWorker.postMessage({
+      key: 'ensure-level-device',
+      levelName: this.def.levelName,
+    });
   }
 
   protected onWorkerMessage = ({ data: _msg }: Message<MessageFromOsWorker>) => {
@@ -23,5 +31,5 @@ export class LevelClient extends BaseOsClient<LevelClientDef> {
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface LevelClientDef extends BaseOsClientDef {
-  // TODO
+  levelName: string;
 }

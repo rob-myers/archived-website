@@ -4,6 +4,8 @@ import { createThunk } from '@model/root.redux.model';
 import { testNever, KeyedLookup } from '@model/generic.model';
 import { LevelState, createLevelState, LevelStateInit, LevelOptionCommand } from '@model/level/level.model';
 import { loadSceneFromGtlf, babylonEngineParams } from '@model/level/babylon.model';
+import { OsWorker } from '@model/os/os.worker.model';
+import { LevelClient } from '@model/client/level.client';
 
 export interface State {
   instance: KeyedLookup<LevelState>;
@@ -44,19 +46,24 @@ export const Thunk = {
   ),
   createLevel: createThunk(
     '[Level] create',
-    async ({ dispatch, state: { level } }, { uid, canvas }: {
+    async ({ dispatch, state: { level } }, { uid, canvas, osWorker }: {
       uid: string;
       canvas: Redacted<HTMLCanvasElement>;
+      osWorker: Redacted<OsWorker>;
     }) => {
       if (level.instance[uid]) {// Avoid duplicate engines
         dispatch(Thunk.destroyLevel({ uid }));
       }
       const engine = new BABYLON.Engine(canvas, true, babylonEngineParams);
       const scene = await loadSceneFromGtlf(engine, canvas);
+      const levelClient = new LevelClient({ osWorker, levelName: uid });
+      levelClient.initialise();
+
       dispatch(Act.registerLevel(uid, {
         canvas,
         engine: redact(engine),
         scene: redact(scene),
+        client: redact(levelClient),
       }));
       dispatch(Thunk.setLevelOption({ key: 'render', uid, shouldRender: true }));
     },

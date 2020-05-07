@@ -6,6 +6,7 @@ import { osInitializeThunk, osStorePingAct } from '@store/os/init.os.duck';
 import { OsSession, osCreateSessionThunk, osEndSessionThunk } from '@store/os/session.os.duck';
 import { OsDispatchOverload } from '@model/os/os.redux.model';
 import { SigEnum } from '@model/os/process.model';
+import { osEnsureLevelThunk } from '@store/os/level.os.duck';
 
 const ctxt: OsWorkerContext = self as any;
 
@@ -102,6 +103,10 @@ ctxt.addEventListener('message', async ({ data: msg }) => {
       // Trigger persist
       dispatch(osStorePingAct({ pingedAtMs: Date.now() }));
       persistor.pause();
+      break;
+    }
+    case 'ensure-level-device': {
+      dispatch(osEnsureLevelThunk({ levelName: msg.levelName }));
       break;
     }
   }

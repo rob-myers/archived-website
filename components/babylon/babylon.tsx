@@ -1,8 +1,9 @@
 import { useRef, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
-import * as BABYLON from 'babylonjs';
+// import * as BABYLON from 'babylonjs';
 
 import { Thunk } from '@store/level.duck';
+import { Thunk as XTermThunk } from '@store/xterm.duck';
 import { redact } from '@model/redux.model';
 import usePageVisibility from '@components/page-visible/page-visible';
 import css from './babylon.scss';
@@ -13,17 +14,14 @@ const BabylonComponent: React.FC<Props> = ({ uid }) => {
   const pageVisible = usePageVisibility();
 
   useEffect(() => {
-    dispatch(Thunk.createLevel({ uid, canvas: redact(canvasEl.current!) })).then(() => {
-      // dispatch(Thunk.addCuboid({ // TEST
-      //   levelUid: uid,
-      //   bounds: new BABYLON.Vector3(1, 1, 1),
-      //   meshName: 'my-test-cube',
-      //   position: new BABYLON.Vector3(0, 3, 0),
-      // }));
-    });
-    return () => {
-      dispatch(Thunk.destroyLevel({ uid }));
-    };
+    (async () => {
+      await dispatch(Thunk.createLevel({
+        uid,
+        canvas: redact(canvasEl.current!),
+        osWorker: await dispatch(XTermThunk.ensureGlobalSetup({})),
+      }));
+    })();
+    return () => dispatch(Thunk.destroyLevel({ uid }));
   }, [
     uid,
   ]);
