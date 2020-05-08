@@ -40,6 +40,7 @@ const BabylonComponent: React.FC<Props> = ({ uid }) => {
 
   return (
     <canvas
+      width={300} height={300}
       ref={canvasEl}
       className={css.canvas}
     />

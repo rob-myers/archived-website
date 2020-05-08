@@ -56,13 +56,13 @@ export class CustomCameraKeyboardInput implements BABYLON.ICameraInput<BABYLON.U
       const camera = this.camera;
       for (const keyCode in this.keys) {
         if (keyCode in this.keysLeft) {
-          camera.position.x += this.delta;
-        } else if (keyCode in this.keysUp) {
-          camera.position.z -= this.delta;
-        } else if (keyCode in this.keysRight) {
           camera.position.x -= this.delta;
-        } else if (keyCode in this.keysDown) {
+        } else if (keyCode in this.keysUp) {
           camera.position.z += this.delta;
+        } else if (keyCode in this.keysRight) {
+          camera.position.x += this.delta;
+        } else if (keyCode in this.keysDown) {
+          camera.position.z -= this.delta;
         }
       }
     }

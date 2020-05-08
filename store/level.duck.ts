@@ -3,7 +3,9 @@ import { createAct, ActionsUnion, addToLookup, updateLookup, removeFromLookup, R
 import { createThunk } from '@model/root.redux.model';
 import { testNever, KeyedLookup } from '@model/generic.model';
 import { LevelState, createLevelState, LevelStateInit, LevelOptionCommand } from '@model/level/level.model';
-import { loadSceneFromGtlf, babylonEngineParams } from '@model/level/babylon.model';
+import {
+  // loadDemoSceneFromGtlf,
+  babylonEngineParams, loadInitialScene } from '@model/level/babylon.model';
 import { OsWorker } from '@model/os/os.worker.model';
 import { LevelClient } from '@model/client/level.client';
 
@@ -55,7 +57,8 @@ export const Thunk = {
         dispatch(Thunk.destroyLevel({ uid }));
       }
       const engine = new BABYLON.Engine(canvas, true, babylonEngineParams);
-      const scene = await loadSceneFromGtlf(engine, canvas);
+      // const scene = await loadDemoSceneFromGtlf(engine, canvas);
+      const scene = loadInitialScene(engine, canvas);
       const levelClient = new LevelClient({ osWorker, levelName: uid });
       levelClient.initialise();
 
