@@ -3,9 +3,7 @@ import { createAct, ActionsUnion, addToLookup, updateLookup, removeFromLookup, R
 import { createThunk } from '@model/root.redux.model';
 import { testNever, KeyedLookup } from '@model/generic.model';
 import { LevelState, createLevelState, LevelStateInit, LevelOptionCommand } from '@model/level/level.model';
-import {
-  // loadDemoSceneFromGtlf,
-  babylonEngineParams, loadInitialScene } from '@model/level/babylon.model';
+import { babylonEngineParams, loadInitialScene, createTile } from '@model/level/babylon.model';
 import { OsWorker } from '@model/os/os.worker.model';
 import { LevelClient } from '@model/client/level.client';
 import { ExternalLevelCmd } from './inode/level.inode';
@@ -30,27 +28,23 @@ export const Act = {
 export type Action = ActionsUnion<typeof Act>;
 
 export const Thunk = {
-  addCuboid: createThunk(
-    '[Level] add mesh',
-    ({ state: { level } }, { levelUid, meshName, bounds, position }: {
-      levelUid: string;
-      meshName: string;
-      bounds: BABYLON.Vector3;
-      position: BABYLON.Vector3;
-    }) => {
-      const { scene } = level.instance[levelUid];
-      const mesh = BABYLON.MeshBuilder.CreateBox(meshName, {
-        width: bounds.x,
-        height: bounds.y,
-        depth: bounds.z,
-      }, scene);
-      mesh.position = position;
-    },
-  ),
-  clearAll: createThunk(
+  clear: createThunk(
     '[Level] clear',
-    (_, __: { levelKey: string }) => {
-      // TODO
+    ({ dispatch, state: { level } }, { levelKey, what }: {
+      levelKey: string;
+      what: 'tiles' | 'walls' | 'all';
+    }) => {
+      const { tiles, walls, scene } = level.instance[levelKey];
+      const updates = {} as Partial<LevelState>;
+      if (what === 'tiles' || what === 'all') {
+        Object.keys(tiles).forEach(key => scene.removeMesh(tiles[key]));
+        updates.tiles = {};
+      }
+      if (what === 'walls' || what === 'all') {
+        Object.keys(walls).forEach(key => scene.removeMesh(walls[key]));
+        updates.walls = {};
+      }
+      dispatch(Act.updateLevel(levelKey, updates));
     },
   ),
   createLevel: createThunk(
@@ -64,23 +58,19 @@ export const Thunk = {
         dispatch(Thunk.destroyLevel({ uid }));
       }
       const engine = new BABYLON.Engine(canvas, true, babylonEngineParams);
-      // const scene = await loadDemoSceneFromGtlf(engine, canvas);
       const scene = loadInitialScene(engine, canvas);
 
       const levelClient = new LevelClient({
         osWorker,
         levelKey: uid,
-        /**
-         * Enact commands originally sent from corresponding LevelINode.
-         */
+        // Execute a command originally sent from corresponding LevelINode
         runCommand: (cmd: ExternalLevelCmd) => {
           switch (cmd.key) {
-            case 'clear': {
-              dispatch(Thunk.clearAll({ levelKey: uid }));
-              break;
-            }
+            case 'clear': dispatch(Thunk.clear({ levelKey: uid, what: cmd.what })); break;
             case 'set-tiles': {
-              dispatch(Thunk.setTiles({ levelKey: uid, ...cmd }));
+              dispatch(Thunk.setTiles({ levelKey: uid, enabled: cmd.enabled,
+                tiles: cmd.tiles.map(([x, y]) => ({ x, y, key: `${x},${y}` })),
+              }));
               break;
             }
           }
@@ -107,13 +97,6 @@ export const Thunk = {
       }
     },
   ),
-  removeMesh: createThunk(
-    '[Level] remove mesh',
-    ({ state: { level } }, { levelUid, meshName }: { levelUid: string; meshName: string }) => {
-      const { scene } = level.instance[levelUid];
-      scene.getMeshByName(meshName)?.dispose();
-    },
-  ),
   setLevelOption: createThunk(
     '[Level] set option',
     ({ state: { level }, dispatch }, cmd: LevelOptionCommand) => {
@@ -133,10 +116,22 @@ export const Thunk = {
   ),
   setTiles: createThunk(
     '[Level] set tiles',
-    (_, __: { levelKey: string; tiles: [number, number][]; enabled: boolean }) => {
-      /**
-       * TODO
-       */
+    ({ state: { level }, dispatch }, { levelKey, tiles, enabled }: {
+      levelKey: string;
+      tiles: { key: string; x: number; y: number }[];
+      enabled: boolean;
+    }) => {
+      const { scene, tiles: prev } = level.instance[levelKey];
+      const next = { ...prev };
+      for (const { key, x, y } of tiles) {
+        if (enabled && !next[key]) {
+          next[key] = createTile(x, y, scene);
+        } else if (!enabled && next[key]) {
+          scene.removeMesh(next[key]);
+          delete next[key];
+        }
+      }
+      dispatch(Act.updateLevel(levelKey, { tiles: next }));
     },
   ),
 };

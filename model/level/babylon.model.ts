@@ -17,11 +17,7 @@ export function loadInitialScene(engine: BABYLON.Engine, canvas: HTMLCanvasEleme
 
   const spotlight = new BABYLON.SpotLight('spotlight', new BABYLON.Vector3(0, 10, 0), BABYLON.Vector3.Down(), Math.PI/2, 10, scene);
   spotlight.intensity *= 0.2;
-
-  createTile(0, 0, scene);
-  createTile(1, 0, scene);
-  createTile(0, 1, scene);
-  
+  // createTile(0, 0, scene);
   setupCamera(canvas, scene);
   
   return scene;
@@ -38,17 +34,15 @@ function setupCamera(canvas: HTMLCanvasElement, scene: BABYLON.Scene) {
   camera.inputs.add(new CustomCameraKeyboardInput(camera));
 }
 
-function createTile(
+export function createTile(
   x: number,
   y: number,
   scene: BABYLON.Scene
 ) {
   const ground = BABYLON.MeshBuilder.CreateGround(`tile-${x}-${y}`,{ width: 1, height: 1 });
   ground.position = new BABYLON.Vector3(x + 0.5, 0, y + 0.5);
-  // ground.enableEdgesRendering();    
-  // ground.edgesWidth = 2.0;
-  // ground.edgesColor = new BABYLON.Color4(0, 0, 0, 1);
   scene.addMesh(ground);
+  return ground;
 }
 
 function _createDebugMaterial(scene: BABYLON.Scene) {
