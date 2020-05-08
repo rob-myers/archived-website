@@ -9480,6 +9480,11 @@ realpath-native@^1.1.0:
   dependencies:
     util.promisify "^1.0.0"
 
+recast-detour@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/recast-detour/-/recast-detour-1.1.0.tgz#2410dadd24504a56f7321a5893e4ee4265ddc25a"
+  integrity sha512-29MxxvFgOlP/K5mgze/3ygraUswIFJp/jFKZLTCRRU9daDHL05U9v/CcaTE7wyvKR979MRUaIlXTNKH98VcsGw==
+
 recast@0.18.5:
   version "0.18.5"
   resolved "https://registry.yarnpkg.com/recast/-/recast-0.18.5.tgz#9d5adbc07983a3c8145f3034812374a493e0fe4d"

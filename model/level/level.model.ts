@@ -10,10 +10,12 @@ export interface LevelState extends LevelStateInit {
   rendering: boolean;
   /** With keys like `3,-2` */
   tiles: Record<string, Redacted<BABYLON.Mesh>>;
+  /** Polygons induced by `tiles` */
+  tilePolys: Redacted<Poly2>[];
+  /** External walls induced by `tiles` */
+  extWalls: Redacted<BABYLON.Mesh>[];
   /** Internal walls With keys like `3,-2` */
   walls: Record<string, Redacted<BABYLON.Mesh>>;
-  tilePolys: Redacted<Poly2>[];
-  extWalls: Redacted<BABYLON.Mesh>[];
 }
 
 export interface LevelStateInit {
@@ -22,23 +24,25 @@ export interface LevelStateInit {
   scene: Redacted<BABYLON.Scene>;
   /** Paired with a LevelINode inside OsWorker */
   client: Redacted<LevelClient>;
+  navPlugin: Redacted<BABYLON.RecastJSPlugin>;
 }
 
 export function createLevelState(
   levelUid: string,
-  { canvas, engine, scene, client }: LevelStateInit
+  { canvas, engine, scene, client, navPlugin }: LevelStateInit
 ): LevelState {
   return {
     key: levelUid,
     canvas,
     engine,
     scene,
+    navPlugin,
     rendering: false,
     client,
     tiles: {},
-    walls: {},
     tilePolys: [],
     extWalls: [],
+    walls: {},
   };
 }
 

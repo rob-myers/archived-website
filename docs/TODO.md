@@ -1,8 +1,6 @@
 # TODO
 
-- auto create outer walls
-- auto create navigable floor
-- can add/remove/clear walls via `wall`
+- can add/remove/clear _internal_ walls via `wall`
 
 - can handle `SIGSTOP` and `SIGCONT`
 - can pause entire session -- but how to pause a `sleep`?
@@ -293,3 +291,5 @@
 - `floor` adds tile to babylon.js
 - can add/remove/clear tiles via `floor`
 - `floor`: support negatives in operands and offset
+- auto create outer walls
+- auto create navigable floor

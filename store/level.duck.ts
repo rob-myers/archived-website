@@ -1,9 +1,13 @@
 import * as BABYLON from 'babylonjs';
+
+// https://forum.babylonjs.com/t/using-navigation-mesh-extension/8031/3
+typeof window !== 'undefined' && ((window as any).Recast = require('recast-detour'));
+
 import { createAct, ActionsUnion, addToLookup, updateLookup, removeFromLookup, Redacted, redact } from '@model/redux.model';
 import { createThunk } from '@model/root.redux.model';
 import { testNever, KeyedLookup } from '@model/generic.model';
 import { LevelState, createLevelState, LevelStateInit, LevelOptionCommand } from '@model/level/level.model';
-import { babylonEngineParams, loadInitialScene, createTile, createWall } from '@model/level/babylon.model';
+import { babylonEngineParams, loadInitialScene, createTile, createWall, babylonNavMeshParams } from '@model/level/babylon.model';
 import { OsWorker } from '@model/os/os.worker.model';
 import { LevelClient } from '@model/client/level.client';
 import { Poly2 } from '@model/poly2.model';
@@ -41,6 +45,7 @@ export const Thunk = {
       if (what === 'tiles' || what === 'all') {
         Object.keys(tiles).forEach(key => tiles[key].dispose());
         updates.tiles = {};
+        updates.extWalls = updates.tilePolys = [];
       }
       if (what === 'walls' || what === 'all') {
         Object.keys(walls).forEach(key => walls[key].dispose());
@@ -94,6 +99,7 @@ export const Thunk = {
         engine: redact(engine),
         scene: redact(scene),
         client: redact(levelClient),
+        navPlugin: redact(new BABYLON.RecastJSPlugin()),
       }));
       dispatch(Thunk.setLevelOption({ key: 'render', uid, shouldRender: true }));
     },
@@ -132,16 +138,16 @@ export const Thunk = {
       tiles: { key: string; x: number; y: number }[];
       enabled: boolean;
     }) => {
-      const { scene, tiles: prev, tilePolys, extWalls } = level.instance[levelKey];
-      const [next, rects] = [{ ...prev }, [] as Rect2[]];
+      const { scene, tiles: prev, tilePolys, extWalls,  } = level.instance[levelKey];
+      const [nextTiles, rects] = [{ ...prev }, [] as Rect2[]];
       
       for (const { key, x, y } of tiles) {
         rects.push(new Rect2(x, y, 1, 1));
-        if (enabled && !next[key]) {
-          next[key] = redact(createTile(x, y, scene));
-        } else if (!enabled && next[key]) {
-          next[key].dispose();
-          delete next[key];
+        if (enabled && !nextTiles[key]) {
+          nextTiles[key] = redact(createTile(x, y, scene));
+        } else if (!enabled && nextTiles[key]) {
+          nextTiles[key].dispose();
+          delete nextTiles[key];
         }
       }
 
@@ -150,12 +156,28 @@ export const Thunk = {
         : Poly2.cutOut(rects.map(x => x.poly2), tilePolys);
 
       extWalls.forEach(wall => wall.dispose());
+      const nextExtWalls = polys.flatMap(x => x.lineSegs)
+        .map(([u, v]) => redact(createWall(u, v, scene)));
+
+      console.log({ tileCount: Object.keys(nextTiles).length, wallCount: nextExtWalls.length });
+
+      const navPlugin = new BABYLON.RecastJSPlugin();
+      navPlugin.createNavMesh([
+        ...Object.values(nextTiles),
+        ...nextExtWalls,
+      ], babylonNavMeshParams);
+
+      // Debug
+      scene.getMeshByName('debug-mesh')?.dispose();
+      const debugMesh = navPlugin.createDebugNavMesh(scene);
+      debugMesh.name = 'debug-mesh';
+      debugMesh.material = scene.getMaterialByName('debug-nav-material');
 
       dispatch(Act.updateLevel(levelKey, {
-        tiles: next,
+        tiles: nextTiles,
         tilePolys: polys.map(x => redact(x)),
-        extWalls: polys.flatMap(x => x.lineSegs)
-          .map(([u, v]) => redact(createWall(u, v, scene))),
+        extWalls: nextExtWalls,
+        navPlugin: redact(navPlugin),
       }));
     },
   ),

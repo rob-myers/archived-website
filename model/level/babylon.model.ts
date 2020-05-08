@@ -3,14 +3,30 @@ import { Vector3, Light, IShadowLight } from 'babylonjs';
 import 'babylonjs-loaders';
 import 'babylonjs-materials';
 import { GridMaterial } from 'babylonjs-materials';
+import { Vector2 } from '@model/vec2.model';
 import shadowTest1Gltf from './gltf/shadow-test-1.gltf';
 import { CustomCameraKeyboardInput } from './babylon-input.model';
-import { Vector2 } from '@model/vec2.model';
 
 export const babylonEngineParams: BABYLON.EngineOptions = {
   preserveDrawingBuffer: true,
   stencil: true,
   antialias: true,
+};
+
+export const babylonNavMeshParams: BABYLON.INavMeshParameters = {
+  cs: 0.2,
+  ch: 0.2,
+  walkableSlopeAngle: 35,
+  walkableHeight: 1,
+  walkableClimb: 1,
+  walkableRadius: 2,
+  maxEdgeLen: 12.,
+  maxSimplificationError: 1,
+  minRegionArea: 8,
+  mergeRegionArea: 20,
+  maxVertsPerPoly: 6,
+  detailSampleDist: 6,
+  detailSampleMaxError: 1,
 };
 
 export function loadInitialScene(engine: BABYLON.Engine, canvas: HTMLCanvasElement) {
@@ -39,6 +55,10 @@ export function loadInitialScene(engine: BABYLON.Engine, canvas: HTMLCanvasEleme
   white.useRGBColor = false;
   white.primaryColor = new BABYLON.Color3(1, 1, 1);
 
+  const debugMat = new BABYLON.StandardMaterial('debug-nav-material', scene);
+  debugMat.diffuseColor = new BABYLON.Color3(0.1, 0.2, 1);
+  debugMat.alpha = 0.2;
+
   return scene;
 }
 
@@ -65,7 +85,7 @@ export function createTile(x: number, y: number, scene: BABYLON.Scene) {
 export function createWall(u: Vector2, v: Vector2, scene: BABYLON.Scene) {
   
   const delta = 0.05;
-  const height = 5;
+  const height = 2.5;
   const wall = BABYLON.MeshBuilder.CreateBox(`wall-${u}-${v}`, {
     height,
     width: Math.abs(v.x - u.x) + 2 * delta,
