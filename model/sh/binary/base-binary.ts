@@ -46,6 +46,18 @@ export abstract class BaseBinaryComposite<
       .filter((x) => x !== '_' && !boolean.includes(x) && !string.includes(x));
   }
 
+  protected getOptLookups() {
+    return {
+      fromBool: this.specOpts().boolean.reduce((agg, x) => ({
+        ...agg, [x.length === 1 ? `-${x}` : `--${x}`]: true as true
+      }), {} as Record<string, true>),
+      fromString: this.specOpts().string.reduce((agg, x) => ({
+        ...agg, [x.length === 1 ? `-${x}` : `--${x}`]: true as true
+      }), {} as Record<string, true>),
+    };
+  }
+
+
 }
 interface BaseBinaryCompositeDef<ExactKey extends BinaryType> extends BaseTermDef<CompositeType.binary>, BaseBinaryDef<ExactKey> {}
 

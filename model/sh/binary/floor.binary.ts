@@ -5,7 +5,7 @@ import { OsDispatchOverload } from '@model/os/os.redux.model';
 import { osGetLevelDeviceThunk } from '@store/os/level.os.duck';
 import { levDevVarName } from '@model/os/os.model';
 
-const coordRegex = /^(\d+),(\d+)$/;
+const coordRegex = /^(-?\d+),(-?\d+)$/;
 type StringOpts = 'o' | 'offset'
 type BooleanOpts = 'c' | 'clear' | 'r' | 'remove';
 
@@ -36,18 +36,19 @@ export class FloorBinary extends BaseBinaryComposite<
       }
 
       let offset = [0, 0] as [number, number];
-      const offsetOpt = this.opts.o || this.opts.offset;
-      if (offsetOpt) {
-        const matched = offsetOpt.match(coordRegex);
+      const offsetValue = this.def.args.find((_, i, items) =>
+        items[i-1] === '-o' || items[i-1] === '--offset');
+      if (offsetValue) {
+        const matched = offsetValue.match(coordRegex);
         if (matched) {
           offset = [Number(matched[1]), Number(matched[2])];
         } else {
-          yield this.exit(1, `unexpected offset ${offsetOpt}`);
+          yield this.exit(1, `unexpected offset ${offsetValue}`);
         }
       }
 
       const tiles = [] as [number, number][];
-      for (const operand of this.operands) {
+      for (const operand of this.customOperands()) {
         const matched = operand.match(coordRegex);
         if (matched) {
           tiles.push([Number(matched[1]), Number(matched[2])]);
@@ -56,11 +57,25 @@ export class FloorBinary extends BaseBinaryComposite<
         }
       }
 
-      const enabled = !(this.opts.r || this.opts.remove);
-      await device.run({ key: 'set-tiles', tiles, enabled, offset });
+      await device.run({
+        key: 'set-tiles',
+        tiles,
+        enabled: !(this.opts.r || this.opts.remove),
+        offset,
+      });
 
     } else {
       yield this.exit(1, `${levDevVarName} must resolve to a level device`);
     }
+  }
+
+  private customOperands() {
+    const { fromBool, fromString } = this.getOptLookups();
+    return this.def.args
+      .filter(x => !fromBool[x]) // Discard boolean opts
+      .reduce( // Discard string opts
+        (agg, x, i, items) => fromString[items[i-1]] ? agg.slice(0, -1) : agg.concat(x),
+        [] as string[],
+      );
   }
 }

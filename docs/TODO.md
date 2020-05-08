@@ -1,5 +1,7 @@
 # TODO
 
+- auto create outer walls
+- auto create navigable floor
 - can add/remove/clear walls via `wall`
 
 - can handle `SIGSTOP` and `SIGCONT`
@@ -290,3 +292,4 @@
 - babylonjs starts with simple scene
 - `floor` adds tile to babylon.js
 - can add/remove/clear tiles via `floor`
+- `floor`: support negatives in operands and offset
