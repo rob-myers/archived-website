@@ -57,7 +57,6 @@ export class SimpleComposite extends BaseCompositeTerm<CompositeType.simple> {
   }
 
   public async *semantics(dispatch: OsDispatchOverload, processKey: string): AsyncIterableIterator<ObservedType> {
-    // Perform shell expansion.
     yield* this.computeArgs(dispatch, processKey);
     
     if (!this.args[0]) {
@@ -69,6 +68,9 @@ export class SimpleComposite extends BaseCompositeTerm<CompositeType.simple> {
     yield* this.tryLaunch(dispatch, processKey);
   }
 
+  /**
+   * Perform shell expansion.
+   */
   private async *computeArgs(dispatch: OsDispatchOverload, processKey: string): AsyncIterableIterator<ObservedType> {
     for (const word of this.def.words) {
       /**
@@ -95,8 +97,8 @@ export class SimpleComposite extends BaseCompositeTerm<CompositeType.simple> {
        */
       for (const pattern of fileArgs) {
         if (/\*|\?|\[/.test(pattern)) {
-          // Could be a glob.
-          // console.log('Applying filename expansion to:', JSON.stringify(pattern));// DEBUG
+          // Could be a glob
+          // console.log('Applying filename expansion to:', JSON.stringify(pattern));
           const result = dispatch(osExpandFilepathThunk({ processKey, pattern }));
           result?.sort();
           // console.log({ result });// DEBUG
@@ -116,11 +118,11 @@ export class SimpleComposite extends BaseCompositeTerm<CompositeType.simple> {
 
     for (const assign of this.def.assigns) {
       yield* this.runChild({ child: assign, dispatch, processKey });
-      // Don't fail on bad assign, but remember.
+      // Don't fail on bad assign, but remember
       this.exitCode && (assignExitCode = this.exitCode);
     }
 
-    // Apply redirections in new temporary redirection scope.
+    // Apply redirections in new temporary redirection scope
     if (this.def.redirects.length) {
       dispatch(osPushRedirectScopeAct({ processKey }));
       for (const redirect of this.def.redirects) {
@@ -141,11 +143,10 @@ export class SimpleComposite extends BaseCompositeTerm<CompositeType.simple> {
     const foundFunc = dispatch(osGetFunctionThunk({ processKey, functionName: this.args[0] }));
 
     if (foundFunc) {
-      // Clone and mount function code.
+      // Clone and mount function code
       const mounted = dispatch(osCloneTerm({ term: foundFunc.term }));
       this.method = { key: 'invoke-function', mounted, funcName: foundFunc.key };
       this.adoptChildren();
-  
       /**
        * Invoke function with redirects in new redirection scope.
        * - Additional args after function name become +ve positionals.
@@ -158,21 +159,17 @@ export class SimpleComposite extends BaseCompositeTerm<CompositeType.simple> {
         exportAssigns: this.def.assigns,
         codeStackItem: { key: 'function', funcName: foundFunc.key, src: foundFunc.src },
       });
-
       yield this.exit(this.exitCode || 0);
     }
   }
 
-  /**
-   * _TODO_ support running builtins in background?
-   */
   private async *tryRunBuiltin(dispatch: OsDispatchOverload, processKey: string): AsyncIterableIterator<ObservedType> {
     const [command] = this.args;
 
     if (isBuiltinSpecialCommand(command) || isBuiltinOtherCommand(command)) {
       const args = this.args.slice(1);
       
-      // Normalize commands to {BuiltinType}.
+      // Normalize commands to `BuiltinType`
       let builtinKey: BuiltinType;
       if (command === ':') {
         builtinKey = BuiltinSpecialType.colon;
@@ -186,11 +183,11 @@ export class SimpleComposite extends BaseCompositeTerm<CompositeType.simple> {
   
       // Safety and clarity.
       if (isDeclareBuiltinType(builtinKey)) {
-        console.error('Declare-based builtins not implemented in {SimpleComposite}');
+        console.error('Declare-based builtins not implemented in `SimpleComposite`');
         yield this.exit(2);
         return; // Unreachable, but for typescript.
       } else if (builtinKey === BuiltinOtherType.let) {
-        console.error('Builtin \'let\' not implemented in {SimpleComposite}');
+        console.error('Builtin \'let\' not implemented in `SimpleComposite`');
         yield this.exit(2);
       }
   
@@ -200,20 +197,17 @@ export class SimpleComposite extends BaseCompositeTerm<CompositeType.simple> {
         this.method = { key: 'run-builtin', builtin };
         this.adoptChildren();
     
-        // Only '.' and 'source' need `this.def.assigns`
         if (builtin.builtinKey === BuiltinSpecialType.period || builtin.builtinKey === BuiltinOtherType.source) {
           builtin.assigns = this.def.assigns;
         }
     
-        if (builtin.builtinKey === BuiltinSpecialType.exec) {
+        if (builtin.builtinKey === BuiltinSpecialType.exec && !this.def.background) {
           builtin.redirects = this.def.redirects;
           yield* this.runChild({ child: builtin, dispatch, processKey });
+        } else if (this.def.background) {
+          yield* this.launch({ key: 'builtin', type: builtin.builtinKey, builtin }, dispatch, processKey);
         } else {
-          if (this.def.background) {
-            yield* this.launch({ key: 'builtin', type: builtin.builtinKey, builtin }, dispatch, processKey);
-          } else {
-            yield* this.runChild({ child: builtin, dispatch, processKey }, { freshRedirs: this.def.redirects });
-          }
+          yield* this.runChild({ child: builtin, dispatch, processKey }, { freshRedirs: this.def.redirects });
         }
         yield this.exit(builtin.exitCode || 0);
       } catch (e) {
@@ -371,10 +365,8 @@ export class SimpleComposite extends BaseCompositeTerm<CompositeType.simple> {
     }
     const postProc = dispatch(osGetProcessThunk({ processKey }));
     
-    if (this.def.redirects.length) {
-      if (postProc && prevProc.term === postProc.term) {
-        dispatch(osPopRedirectScopeAct({ processKey }));
-      }
+    if (this.def.redirects.length && postProc && prevProc.term === postProc.term) {
+      dispatch(osPopRedirectScopeAct({ processKey }));
     }
 
     yield this.exit(this.def.background ? 0 : prevProc.lastExitCode || 0);
@@ -382,7 +374,8 @@ export class SimpleComposite extends BaseCompositeTerm<CompositeType.simple> {
 
 }
 
-interface SimpleCompositeDef extends BaseTermDef<CompositeType.simple>, SimpleCommandDef<AssignComposite, ExpandComposite, RedirectComposite> {}
+interface SimpleCompositeDef extends BaseTermDef<CompositeType.simple>,
+  SimpleCommandDef<AssignComposite, ExpandComposite, RedirectComposite> {}
 
 interface SimpleCommandDef<AssignType, WordType, RedirType> {
   assigns: AssignType[];

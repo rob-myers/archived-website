@@ -6,10 +6,10 @@ import { SigEnum } from '@model/os/process.model';
 import { osCreateTtyThunk } from './tty.os.duck';
 import { State } from './os.duck';
 import { TtyINode } from '@store/inode/tty.inode';
-import { osForkProcessThunk, osCloseProcessFdsAct, osSetProcessGroupAct, osExecTermThunk, osStartProcessThunk, osTerminateProcessThunk } from './process.os.duck';
+import { osForkProcessThunk, osCloseProcessFdsAct, osSetProcessGroupAct, osExecTermThunk, osStartProcessThunk, osTerminateProcessThunk, osHandleSignalThunk } from './process.os.duck';
 import { osOpenFileThunk, osUnlinkFileThunk } from './file.os.duck';
 import { osSetProcessUserThunk, osCreateUserThunk } from './user.os.duck';
-import { ensureArrayItem, last, testNever } from '@model/generic.model';
+import { ensureArrayItem, last } from '@model/generic.model';
 import { isInteractiveShell, findAncestralTerm, isBash } from '@os-service/term.util';
 
 /**
@@ -261,8 +261,7 @@ interface EndSessionThunk extends OsThunkAct<OsAct, { sessionKey: string }, void
 }
 
 /**
- * Signal foreground process group in specified session.
- * Foreground group either:
+ * Signal foreground process group in specified session, which either:
  * - has 1st process as interactive bash.
  * - is a set of binaries in a pipeline spawned by bash.
  */
@@ -272,58 +271,27 @@ export const osSignalForegroundThunk = createOsThunk<OsAct, SignalForegroundThun
 
     // Possibly no foreground e.g. 'init' has none
     const { fgStack } = os.session[sessionKey];
-    if (!fgStack.length) {
-      return;
-    }
-    // Get process keys in foreground group.
+    if (!fgStack.length) return;
+    // Get process keys in foreground group
     const fgKey = last(fgStack) as string;
     const { procKeys } = os.procGrp[fgKey];
-
     const signalKeys = procKeys.slice();
     const first = os.proc[signalKeys[0]];
-    
     /**
      * If 1st process in foreground group is not interactive bash, expect
      * parent of 1st process in group _is_. We'll signal it after others.
      */
     if (!isInteractiveShell(first.term)) {
       if (isInteractiveShell(os.proc[first.parentKey].term)) {
-        signalKeys.push(first.parentKey); // Signal it last.
+        signalKeys.push(first.parentKey); // Signal it last
       } else {
         console.log(`Signal '${signal}' for foreground of session '${sessionKey}' was ignored`);
-        // console.log({ signalKeys, first });
         return;
       }
     }
 
     for (const processKey of signalKeys) {
-      const { sigHandler, term, command } = os.proc[processKey];
-      const handler = sigHandler[signal];
-
-      if (!handler) {// Terminate if signal unhandled
-        dispatch(osTerminateProcessThunk({ processKey, exitCode: 0 }));
-        continue;
-      }
-
-      if (handler.cleanup) {
-        handler.cleanup();
-      }
-
-      switch(handler.do) {
-        case 'ignore': {
-          break;
-        }
-        case 'reset': {
-          dispatch(osExecTermThunk({ processKey, term, command }));
-          dispatch(osStartProcessThunk({ processKey }));
-          break;
-        }
-        case 'terminate': {
-          dispatch(osTerminateProcessThunk({ processKey, exitCode: 0 })); 
-          break;
-        }
-        default: throw testNever(handler.do);
-      }
+      dispatch(osHandleSignalThunk({ processKey, signal }));
     }
   }
 );

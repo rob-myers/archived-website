@@ -2,7 +2,8 @@ import { BaseBuiltinComposite } from './base-builtin';
 import { BuiltinOtherType } from '../builtin.model';
 import { ObservedType } from '@os-service/term.service';
 import { sigIntsOpts, sigKeysOpts, SigEnum, sigIntToEnum, sigShortKeysOpts } from '@model/os/process.model';
-
+import { OsDispatchOverload } from '@model/os/os.redux.model';
+import { osHandleSignalThunk, osGetProcessesMeta } from '@store/os/process.os.duck';
 
 /**
  * e.g. `kill -1 --SIGHUP --HUP {pid}`
@@ -19,28 +20,39 @@ export class KillBuiltin extends BaseBuiltinComposite<
     };
   }
 
-  public async *semantics(): AsyncIterableIterator<ObservedType> {
+  public async *semantics(dispatch: OsDispatchOverload): AsyncIterableIterator<ObservedType> {
     if (this.opts.l) {
       yield this.write(this.signalsText());
       yield this.exit();
     }
-
     const opts = Object.keys(this.opts).filter(x => (this.opts as any)[x]);
-    const sigs = ([] as SigEnum[]).concat(
+
+    const signals = ([] as SigEnum[]).concat(
       opts.filter((x): x is SigEnum => x in SigEnum),
       opts.filter((x) => sigIntsOpts.includes(x)).map(x => sigIntToEnum[Number(x)]),
       opts.filter((x) => sigShortKeysOpts.includes(x)).map(x => `SIG${x}` as SigEnum)
-    ).reduce<{ [sig in SigEnum]?: true }>((agg, sig) => ({ ...agg, [sig]: true }), {});
+    ).reduce<SigEnum[]>((agg, sig) => (agg.concat(sig)), []);
 
-    console.log({ sigs });
-    /**
-     * TODO parse pid, pgid
-     * TODO implement SIGKILL
-     * TODO implement SIGTERM
-     * TODO implement SIGSTOP
-     * TODO implement SIGCONT
-     */
+    if (!signals.length) {// Default to SIGTERM
+      signals.push(SigEnum.SIGTERM);
+    }
+    const pids = this.operands.map(x => parseInt(x))
+      .filter(x => Number.isFinite(x) && x > 0);
+    // console.log({ sigs: signals, pids });
 
+    const pidToKey = dispatch(osGetProcessesMeta({})).metas.reduce<Record<number, string>>(
+      (agg, { pid, processKey }) => ({ ...agg, [pid]: processKey }), {});
+
+    for (const pid of pids) {
+      const otherProcessKey = pidToKey[pid];
+      if (!otherProcessKey) {
+        yield this.warn(`(${pid}) - No such process`);
+        continue;
+      }
+      for (const signal of signals) {
+        dispatch(osHandleSignalThunk({ processKey: otherProcessKey, signal }));
+      }
+    }
   }
 
   private signalsText() {

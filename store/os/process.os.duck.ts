@@ -6,7 +6,7 @@ import { SyncActDef, SyncAct, updateLookup, addToLookup, removeFromLookup, Redux
 import { createOsThunk, OsThunkAct, createOsAct } from '@model/os/os.redux.model';
 import { OsAct, OsProcGroup } from '@model/os/os.model';
 import { Term, CompositeType } from '@model/os/term.model';
-import { ProcessState, UnregisteredProcess, FromFdToOpenKey, ProcessSigHandler, CodeStackItem } from '@model/os/process.model';
+import { ProcessState, UnregisteredProcess, FromFdToOpenKey, ProcessSigHandler, CodeStackItem, SigEnum } from '@model/os/process.model';
 import { closeFd } from '@os-service/filesystem.service';
 import { State } from '@store/os/os.duck';
 import { osIncrementOpenAct, osReadThunk, osWriteThunk, IoToPromise, osOpenFileThunk } from '@store/os/file.os.duck';
@@ -321,6 +321,7 @@ export type Thunk = (
   | ForkProcessThunk
   | GetProcessThunk
   | GetProcessesMetaThunk
+  | HandleSignalThunk
   | IsSessionLeaderThunk
   | SpawnChildThunk
   | StartProcessThunk
@@ -471,7 +472,7 @@ export const osGetProcessesMeta = createOsThunk<OsAct, GetProcessesMetaThunk>(
   OsAct.OS_GET_PROCESSES_META_THUNK,
   ({ state: { os: { proc, session }}, dispatch }) => {
     return {
-      metas: Object.values(proc).map(({ pid, sessionKey, term, command: launchedCommand }) => {
+      metas: Object.values(proc).map(({ key, pid, sessionKey, term, command: launchedCommand }) => {
         const { ttyPath } = session[sessionKey];
 
         let command = '';
@@ -484,6 +485,7 @@ export const osGetProcessesMeta = createOsThunk<OsAct, GetProcessesMetaThunk>(
         }
 
         return {
+          processKey: key,
           pid,
           command,
           ttyName: ttyPath?.split('/').pop() || null,
@@ -496,9 +498,50 @@ interface GetProcessesMetaThunk extends OsThunkAct<OsAct, {}, { metas: ProcMeta[
   type: OsAct.OS_GET_PROCESSES_META_THUNK;
 }
 interface ProcMeta {
+  processKey: string;
   pid: number;
   ttyName: string | null;
   command: string;
+}
+
+
+/**
+ * TODO implement SIGKILL
+ * TODO implement SIGSTOP
+ * TODO implement SIGCONT
+     */
+export const osHandleSignalThunk = createOsThunk<OsAct, HandleSignalThunk>(
+  OsAct.OS_HANDLE_SIGNAL_THUNK,
+  ({ state: { os }, dispatch }, { processKey, signal }) => {
+
+    const { sigHandler, term, command } = os.proc[processKey];
+    const handler = sigHandler[signal];
+
+    if (!handler) { // Terminate if signal unhandled
+      dispatch(osTerminateProcessThunk({ processKey, exitCode: 0 }));
+      return;
+    } else if (handler.cleanup) {
+      handler.cleanup();
+    }
+
+    switch(handler.do) {
+      case 'ignore': break;
+      case 'reset': {
+        dispatch(osExecTermThunk({ processKey, term, command }));
+        dispatch(osStartProcessThunk({ processKey }));
+        break;
+      }
+      case 'terminate': {
+        dispatch(osTerminateProcessThunk({ processKey, exitCode: 0 })); 
+        break;
+      }
+      default: throw testNever(handler.do);
+    }
+
+  },
+);
+interface HandleSignalThunk extends OsThunkAct<OsAct, { processKey: string; signal: SigEnum }, void> {
+  type: OsAct.OS_HANDLE_SIGNAL_THUNK;
 }
 
 /**
@@ -799,31 +842,30 @@ export const osTerminateProcessThunk = createOsThunk<OsAct, TerminateProcessThun
     if (!os.proc[processKey]) {
       return console.log(`process '${processKey}' has already terminated`);
     }
-
     dispatch(osCloseProcessFdsAct({ processKey }));
-    // Stop any running code
-    os.proc[processKey].subscription?.unsubscribe();
-    // Terminate any spawned processes
+    os.proc[processKey].subscription?.unsubscribe(); // Stop code
+    /**
+     * Terminate any spawned processes (?)
+     */
     Object.values(os.proc)
       .filter(({ parentKey }) => processKey === parentKey)
       .forEach(({ key }) => dispatch(osTerminateProcessThunk({ processKey: key, exitCode: 0 })));
-    // TODO terminate descendants if implement non-interactive bash?
 
     dispatch(osUnregisterProcessAct({ processKey }));
     console.log(`[\x1b[36m${processKey}\x1b[39m] has terminated.`);
 
     const { parentKey } = os.proc[processKey];
-    if (!os.proc[parentKey]) {// Parent already terminated.
-      return;
+    if (!os.proc[parentKey]) {
+      return; // Parent already terminated
     }
     dispatch(osUpdateProcessAct({ processKey: parentKey,
       updater: ({ childCount: c }) => ({ childCount: c - 1, lastExitCode: exitCode }),
     }));
 
     const { tryResolveWait } = os.proc[parentKey];
-    if (tryResolveWait) {// Inform waiting parent that child terminated.
+    if (tryResolveWait) { // Inform waiting parent that child terminated
       tryResolveWait(processKey);
-    } else {/* Was not waiting, or was but has since been exec'd. */}
+    } else { /* Wasn't waiting, or was but exec'd. */ }
   },
 );
 interface TerminateProcessThunk extends OsThunkAct<OsAct, { processKey: string; exitCode: number }, void> {

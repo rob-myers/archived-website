@@ -2,13 +2,11 @@
 
 - can add floors and walls to specified level via binaries
 
-- shell signals
-  - implement `kill` with `SIGSTOP`, `SIGCONT`, `SIGINT,` `SIGTERM`
-  - `fg` puts process into foreground
-  - for `goto` intend `STOP`/`CONT` to pause/continue animations
-  - can pause entire session -- but how to pause a `sleep`?
-    - if finishes make it sleep the 'difference' and immediately pause it
-  - can bring bg process to foreground
+- can handle `SIGSTOP` and `SIGCONT`
+- can pause entire session -- but how to pause a `sleep`?
+  - if finishes make it sleep the 'difference' and immediately pause it
+- `fg` puts process into foreground
+- can bring bg process to foreground
 - implement tab completion
 - implement `jq` using jq-web
 - implement `find` (basic version)
@@ -287,3 +285,4 @@
 - `floor`, `wall` fail if `LEVEL_DEVICE` doesn't resolve as level.inode.
 - Get background builtins working e.g. `source foo <>fifo &`.
   `{ source foo <>fifo; } &` already works.
+- implement `kill`
