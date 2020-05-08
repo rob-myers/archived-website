@@ -28,6 +28,7 @@
     "downlevelIteration": true,
     "types": [
       "babylonjs",
+      "babylonjs-materials",
       "babylonjs-loaders"
     ]
   },

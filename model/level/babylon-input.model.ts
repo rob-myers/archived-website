@@ -20,7 +20,7 @@ export class CustomCameraKeyboardInput implements BABYLON.ICameraInput<BABYLON.U
   private _onLostFocus = () => this.keys = {};
   private _onKeyDown = null as null | ((e: KeyboardEvent) => void);
   private _onKeyUp = null as null | ((e: KeyboardEvent) => void);
-  private delta = 0.05;
+  private delta = 0.1;
 
   constructor(public camera: BABYLON.UniversalCamera) {
     //

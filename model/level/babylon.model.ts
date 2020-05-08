@@ -1,6 +1,8 @@
 import * as BABYLON from 'babylonjs';
 import { Vector3, Light, IShadowLight } from 'babylonjs';
 import 'babylonjs-loaders';
+import 'babylonjs-materials';
+import { GridMaterial } from 'babylonjs-materials';
 import shadowTest1Gltf from './gltf/shadow-test-1.gltf';
 import { CustomCameraKeyboardInput } from './babylon-input.model';
 
@@ -17,8 +19,14 @@ export function loadInitialScene(engine: BABYLON.Engine, canvas: HTMLCanvasEleme
 
   const spotlight = new BABYLON.SpotLight('spotlight', new BABYLON.Vector3(0, 10, 0), BABYLON.Vector3.Down(), Math.PI/2, 10, scene);
   spotlight.intensity *= 0.2;
-  // createTile(0, 0, scene);
   setupCamera(canvas, scene);
+
+  const gridMaterial = new GridMaterial('gridMaterial', scene);
+  gridMaterial.gridRatio = 0.5;
+  gridMaterial.gridOffset = new BABYLON.Vector3(-0.5, 0, -0.5);
+  gridMaterial.backFaceCulling = false;
+  gridMaterial.mainColor = new BABYLON.Color3(1, 1, 1);
+  gridMaterial.lineColor = new BABYLON.Color3(0.3, 0.3, 0.3);
   
   return scene;
 }
@@ -34,12 +42,10 @@ function setupCamera(canvas: HTMLCanvasElement, scene: BABYLON.Scene) {
   camera.inputs.add(new CustomCameraKeyboardInput(camera));
 }
 
-export function createTile(
-  x: number,
-  y: number,
-  scene: BABYLON.Scene
-) {
-  const ground = BABYLON.MeshBuilder.CreateGround(`tile-${x}-${y}`,{ width: 1, height: 1 });
+export function createTile(x: number, y: number, scene: BABYLON.Scene) {
+  const ground = BABYLON.MeshBuilder.CreateGround(`tile-${x}-${y}`,{ width: 1, height: 1, subdivisions: 2 });
+  ground.material = scene.getMaterialByName('gridMaterial');
+
   ground.position = new BABYLON.Vector3(x + 0.5, 0, y + 0.5);
   scene.addMesh(ground);
   return ground;
