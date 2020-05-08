@@ -1,6 +1,7 @@
 import * as BABYLON from 'babylonjs';
 import { Redacted } from '@model/redux.model';
 import { LevelClient } from '@model/client/level.client';
+import { Poly2 } from '@model/poly2.model';
 
 /** Stored inside main thread. */
 export interface LevelState extends LevelStateInit {
@@ -8,9 +9,11 @@ export interface LevelState extends LevelStateInit {
   /** Are we rendering? */
   rendering: boolean;
   /** With keys like `3,-2` */
-  tiles: Record<string, BABYLON.Mesh>;
-  /** With keys like `3,-2` */
-  walls: Record<string, BABYLON.Mesh>;
+  tiles: Record<string, Redacted<BABYLON.Mesh>>;
+  /** Internal walls With keys like `3,-2` */
+  walls: Record<string, Redacted<BABYLON.Mesh>>;
+  tilePolys: Redacted<Poly2>[];
+  extWalls: Redacted<BABYLON.Mesh>[];
 }
 
 export interface LevelStateInit {
@@ -34,6 +37,8 @@ export function createLevelState(
     client,
     tiles: {},
     walls: {},
+    tilePolys: [],
+    extWalls: [],
   };
 }
 

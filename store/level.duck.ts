@@ -3,9 +3,11 @@ import { createAct, ActionsUnion, addToLookup, updateLookup, removeFromLookup, R
 import { createThunk } from '@model/root.redux.model';
 import { testNever, KeyedLookup } from '@model/generic.model';
 import { LevelState, createLevelState, LevelStateInit, LevelOptionCommand } from '@model/level/level.model';
-import { babylonEngineParams, loadInitialScene, createTile } from '@model/level/babylon.model';
+import { babylonEngineParams, loadInitialScene, createTile, createWall } from '@model/level/babylon.model';
 import { OsWorker } from '@model/os/os.worker.model';
 import { LevelClient } from '@model/client/level.client';
+import { Poly2 } from '@model/poly2.model';
+import { Rect2 } from '@model/rect2.model';
 import { ExternalLevelCmd } from './inode/level.inode';
 
 export interface State {
@@ -130,17 +132,31 @@ export const Thunk = {
       tiles: { key: string; x: number; y: number }[];
       enabled: boolean;
     }) => {
-      const { scene, tiles: prev } = level.instance[levelKey];
-      const next = { ...prev };
+      const { scene, tiles: prev, tilePolys, extWalls } = level.instance[levelKey];
+      const [next, rects] = [{ ...prev }, [] as Rect2[]];
+      
       for (const { key, x, y } of tiles) {
+        rects.push(new Rect2(x, y, 1, 1));
         if (enabled && !next[key]) {
-          next[key] = createTile(x, y, scene);
+          next[key] = redact(createTile(x, y, scene));
         } else if (!enabled && next[key]) {
           next[key].dispose();
           delete next[key];
         }
       }
-      dispatch(Act.updateLevel(levelKey, { tiles: next }));
+
+      const polys = enabled
+        ? Poly2.union(rects.map(x => x.poly2).concat(tilePolys))
+        : Poly2.cutOut(rects.map(x => x.poly2), tilePolys);
+
+      extWalls.forEach(wall => wall.dispose());
+
+      dispatch(Act.updateLevel(levelKey, {
+        tiles: next,
+        tilePolys: polys.map(x => redact(x)),
+        extWalls: polys.flatMap(x => x.lineSegs)
+          .map(([u, v]) => redact(createWall(u, v, scene))),
+      }));
     },
   ),
 };
