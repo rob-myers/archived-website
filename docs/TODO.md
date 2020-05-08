@@ -1,5 +1,7 @@
 # TODO
 
+- babylonjs starts with empty scene
+- `floor` adds cube to babylon.js
 - can add floors and walls to specified level via binaries
 
 - can handle `SIGSTOP` and `SIGCONT`
@@ -286,3 +288,4 @@
 - Get background builtins working e.g. `source foo <>fifo &`.
   `{ source foo <>fifo; } &` already works.
 - implement `kill`
+- babylon.js engine resizes
