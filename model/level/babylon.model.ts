@@ -24,7 +24,7 @@ export function loadInitialScene(engine: BABYLON.Engine, canvas: HTMLCanvasEleme
 }
 
 function setupCamera(canvas: HTMLCanvasElement, scene: BABYLON.Scene) {
-  const camera = new BABYLON.UniversalCamera('uni-cam', new Vector3(0, 10, 0), scene);
+  const camera = new BABYLON.UniversalCamera('uni-cam', new Vector3(0, 20, 0), scene);
   camera.setTarget(Vector3.Zero());
   camera.rotation.y += Math.PI; // So +x right, +z up
   camera.minZ = 0;

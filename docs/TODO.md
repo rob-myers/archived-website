@@ -1,7 +1,6 @@
 # TODO
 
-- `floor` adds tile to babylon.js
-- can add floors and walls to specified level via binaries
+- can add/remove/clear walls via `wall`
 
 - can handle `SIGSTOP` and `SIGCONT`
 - can pause entire session -- but how to pause a `sleep`?
@@ -289,3 +288,5 @@
 - implement `kill`
 - babylon.js engine resizes
 - babylonjs starts with simple scene
+- `floor` adds tile to babylon.js
+- can add/remove/clear tiles via `floor`

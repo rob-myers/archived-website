@@ -1,4 +1,5 @@
 import { BaseINode, INodeType, BaseINodeDef } from './base-inode';
+import { testNever } from '@model/generic.model';
 
 export class LevelINode extends BaseINode {
 
@@ -33,13 +34,17 @@ export class LevelINode extends BaseINode {
     return 0; // Immediate EOF
   }
 
-  public run(cmd: LevelDeviceCmd) {
-    this.queueCommands([cmd]);
+  public async run(cmd: LevelDeviceCmd) {
+    await new Promise(resolve => {
+      this.queueCommands([cmd, { key: 'resolve', resolve }]);
+    });
   }
   
   private runCommands = async () => {
     for (const cmd of this.cmdBuffer.splice(0, this.def.cmdsPerDrain)) {
-      await this.def.sendLevelCmd(cmd);
+      if (isExternalCommand(cmd)) {
+        await this.def.sendLevelCmd(cmd);
+      }
 
       switch (cmd.key) {
         case 'clear': {
@@ -50,6 +55,11 @@ export class LevelINode extends BaseINode {
           // TODO augment internal
           break;
         }
+        case 'resolve': {
+          cmd.resolve();
+          break;
+        }
+        default: throw testNever(cmd);
       }
     }
     this.nextDrainId = null;
@@ -64,13 +74,19 @@ export class LevelINode extends BaseINode {
 type LevelDeviceCmd = (
   | { key: 'clear'; what: 'all' | 'tiles' | 'walls' }
   | { key: 'set-tiles'; tiles: [number, number][]; enabled: boolean }
+  | { key: 'resolve'; resolve: () => void }
 );
+
 export type ExternalLevelCmd = Extract<LevelDeviceCmd, {
   key: 'set-tiles' | 'clear';
 }>
 
+function isExternalCommand(cmd: LevelDeviceCmd): cmd is ExternalLevelCmd {
+  return cmd.key === 'set-tiles' || cmd.key === 'clear';
+}
+
 export interface LevelINodeDef extends BaseINodeDef {
   cmdsPerDrain: number;
   refreshMs: number;
-  sendLevelCmd: (cmd: LevelDeviceCmd) => Promise<void>;
+  sendLevelCmd: (cmd: ExternalLevelCmd) => Promise<void>;
 }

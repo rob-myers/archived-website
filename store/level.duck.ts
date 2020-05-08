@@ -34,14 +34,14 @@ export const Thunk = {
       levelKey: string;
       what: 'tiles' | 'walls' | 'all';
     }) => {
-      const { tiles, walls, scene } = level.instance[levelKey];
+      const { tiles, walls } = level.instance[levelKey];
       const updates = {} as Partial<LevelState>;
       if (what === 'tiles' || what === 'all') {
-        Object.keys(tiles).forEach(key => scene.removeMesh(tiles[key]));
+        Object.keys(tiles).forEach(key => tiles[key].dispose());
         updates.tiles = {};
       }
       if (what === 'walls' || what === 'all') {
-        Object.keys(walls).forEach(key => scene.removeMesh(walls[key]));
+        Object.keys(walls).forEach(key => walls[key].dispose());
         updates.walls = {};
       }
       dispatch(Act.updateLevel(levelKey, updates));
@@ -66,7 +66,10 @@ export const Thunk = {
         // Execute a command originally sent from corresponding LevelINode
         runCommand: (cmd: ExternalLevelCmd) => {
           switch (cmd.key) {
-            case 'clear': dispatch(Thunk.clear({ levelKey: uid, what: cmd.what })); break;
+            case 'clear': {
+              dispatch(Thunk.clear({ levelKey: uid, what: cmd.what }));
+              break;
+            }
             case 'set-tiles': {
               dispatch(Thunk.setTiles({ levelKey: uid, enabled: cmd.enabled,
                 tiles: cmd.tiles.map(([x, y]) => ({ x, y, key: `${x},${y}` })),
@@ -127,7 +130,7 @@ export const Thunk = {
         if (enabled && !next[key]) {
           next[key] = createTile(x, y, scene);
         } else if (!enabled && next[key]) {
-          scene.removeMesh(next[key]);
+          next[key].dispose();
           delete next[key];
         }
       }
