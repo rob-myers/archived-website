@@ -2,6 +2,7 @@ import * as BABYLON from 'babylonjs';
 
 // https://forum.babylonjs.com/t/using-navigation-mesh-extension/8031/3
 typeof window !== 'undefined' && ((window as any).Recast = require('recast-detour'));
+typeof window !== 'undefined' && ((window as any).earcut = require('earcut'));
 
 import { createAct, ActionsUnion, addToLookup, updateLookup, removeFromLookup, Redacted, redact } from '@model/redux.model';
 import { createThunk } from '@model/root.redux.model';
@@ -40,11 +41,12 @@ export const Thunk = {
       levelKey: string;
       what: 'tiles' | 'walls' | 'all';
     }) => {
-      const { tiles, walls } = level.instance[levelKey];
+      const { tiles, walls, scene} = level.instance[levelKey];
       const updates = {} as Partial<LevelState>;
       if (what === 'tiles' || what === 'all') {
         Object.keys(tiles).forEach(key => tiles[key].dispose());
         updates.tiles = {};
+        scene.meshes.map(x => x.dispose());
         updates.extWalls = updates.tilePolys = [];
       }
       if (what === 'walls' || what === 'all') {
@@ -151,31 +153,39 @@ export const Thunk = {
         }
       }
 
-      const polys = enabled
+      const nextTilePolys = enabled
         ? Poly2.union(rects.map(x => x.poly2).concat(tilePolys))
         : Poly2.cutOut(rects.map(x => x.poly2), tilePolys);
-
       extWalls.forEach(wall => wall.dispose());
-      const nextExtWalls = polys.flatMap(x => x.lineSegs)
+      const nextExtWalls = nextTilePolys.flatMap(x => x.lineSegs)
         .map(([u, v]) => redact(createWall(u, v, scene)));
 
-      console.log({ tileCount: Object.keys(nextTiles).length, wallCount: nextExtWalls.length });
-
+      // Compute NavMesh using tile polygons (faster)
       const navPlugin = new BABYLON.RecastJSPlugin();
-      navPlugin.createNavMesh([
-        ...Object.values(nextTiles),
-        ...nextExtWalls,
-      ], babylonNavMeshParams);
+      const navPolys = nextTilePolys.flatMap(x => x.createInset(0.45));
+      const tileMeshes = navPolys.map((p) => {
+        const triangulation = new BABYLON.PolygonMeshBuilder('name',
+          p.points.reverse().map(q => new BABYLON.Vector2(q.x, q.y)), scene);
+        p.holes.forEach((hole) => 
+          triangulation.addHole(hole.reverse().map(q => new BABYLON.Vector2(q.x, q.y))));
+        const mesh = triangulation.build(false, 0);
+        mesh.position.y = 0.1;
+        // mesh.material = scene.getMaterialByName('debug-nav-material');
+        mesh.setEnabled(false);
+        return mesh;
+      });
+      navPlugin.createNavMesh(tileMeshes, babylonNavMeshParams);
 
-      // Debug
+      // Debug navmesh
       scene.getMeshByName('debug-mesh')?.dispose();
       const debugMesh = navPlugin.createDebugNavMesh(scene);
+      debugMesh.position.y = -1;
       debugMesh.name = 'debug-mesh';
       debugMesh.material = scene.getMaterialByName('debug-nav-material');
 
       dispatch(Act.updateLevel(levelKey, {
         tiles: nextTiles,
-        tilePolys: polys.map(x => redact(x)),
+        tilePolys: nextTilePolys.map(x => redact(x)),
         extWalls: nextExtWalls,
         navPlugin: redact(navPlugin),
       }));

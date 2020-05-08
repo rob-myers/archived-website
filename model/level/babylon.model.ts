@@ -15,13 +15,13 @@ export const babylonEngineParams: BABYLON.EngineOptions = {
 
 export const babylonNavMeshParams: BABYLON.INavMeshParameters = {
   cs: 0.2,
-  ch: 0.2,
+  ch: 1,
   walkableSlopeAngle: 35,
-  walkableHeight: 1,
-  walkableClimb: 1,
-  walkableRadius: 2,
-  maxEdgeLen: 12.,
-  maxSimplificationError: 1,
+  walkableHeight: 3,
+  walkableClimb: 0,
+  walkableRadius: 0, // We inset manually
+  maxEdgeLen: 100,
+  maxSimplificationError: 0.5,
   minRegionArea: 8,
   mergeRegionArea: 20,
   maxVertsPerPoly: 6,
