@@ -1,30 +1,41 @@
+import { generate } from 'shortid';
 import { OsAct, levDevVarName } from '@model/os/os.model';
 import { createOsThunk, OsThunkAct } from '@model/os/os.redux.model';
 import { osMountFileAct, osResolvePathThunk } from './file.os.duck';
-import { LevelINode } from '@store/inode/level.inode';
+import { LevelINode, LevelDeviceCmd } from '@store/inode/level.inode';
 import { DirectoryINode } from '@store/inode/directory.inode';
 import { osLookupVarThunk } from './declare.os.duck';
+import { awaitParent } from '@model/os/os.worker.model';
 
 /**
  * Ensure level device.
- * Path name will be /dev/level-${levelName}.
+ * Path name will be /dev/level-${levelKey}.
  */
 export const osEnsureLevelThunk = createOsThunk<OsAct, EnsureLevelThunk>(
   OsAct.OS_ENSURE_LEVEL_DEVICE_THUNK,
-  ({ dispatch, state: { os } }, { levelName }) => {
-    const filename = `level-${levelName}`;
+  ({ dispatch, state: { os }, worker }, { levelKey }) => {
+    const filename = `level-${levelKey}`;
     const dev = os.root.to.dev as DirectoryINode;
+
     if (!dev.to[filename]) {
-      const iNode = new LevelINode({ userKey: 'root', groupKey: 'root' });
+      const iNode = new LevelINode({
+        userKey: 'root',
+        groupKey: 'root',
+        cmdsPerDrain: 10,
+        refreshMs: 10,
+        sendLevelCmd: async (cmd: LevelDeviceCmd) => {
+          const messageUid = `msg-${generate()}`;
+          worker.postMessage({ key: 'send-level-cmd', levelKey, cmd, messageUid });
+          await awaitParent('ack-level-cmd', worker, ({ messageUid: other }) => other === messageUid);
+        },
+      });
       dispatch(osMountFileAct({ parent: dev, filename, iNode }));
     }
   },
 );
 
-interface EnsureLevelThunk extends OsThunkAct<OsAct, {
-  /** `levelName` should be alphanumeric */
-  levelName: string;
-}, void> {
+/** `levelKey` should be alphanumeric */
+interface EnsureLevelThunk extends OsThunkAct<OsAct, { levelKey: string }, void> {
   type: OsAct.OS_ENSURE_LEVEL_DEVICE_THUNK;
 }
 

@@ -19,6 +19,7 @@ export class FloorBinary extends BaseBinaryComposite<BinaryExecType.floor> {
        * - add/remove floor tile to scene via coords (top-left of square)
        * - can specify is trigger
        */
+      device.run({ key: 'set-tiles', tiles: [[2, 2]], enabled: true });
     } else {
       yield this.exit(1, `${levDevVarName} must resolve to a level device`);
     }

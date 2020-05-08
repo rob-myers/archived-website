@@ -59,7 +59,7 @@ export const Thunk = {
       const engine = new BABYLON.Engine(canvas, true, babylonEngineParams);
       // const scene = await loadDemoSceneFromGtlf(engine, canvas);
       const scene = loadInitialScene(engine, canvas);
-      const levelClient = new LevelClient({ osWorker, levelName: uid });
+      const levelClient = new LevelClient({ osWorker, levelKey: uid });
       levelClient.initialise();
 
       dispatch(Act.registerLevel(uid, {

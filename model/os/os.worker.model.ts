@@ -1,6 +1,7 @@
 import { SigEnum } from './process.model';
 import { VoiceCommandSpeech } from '@model/client/voice.client';
 import { BaseMessage, Message } from '@model/worker.model';
+import { LevelDeviceCmd } from '@store/inode/level.inode';
 
 /** Worker in parent thread */
 export interface OsWorker extends Worker {
@@ -172,7 +173,19 @@ interface SaveOperatingSystem extends BaseMessage {
 
 interface EnsureLevelDevice extends BaseMessage {
   key: 'ensure-level-device';
-  levelName: string;
+  levelKey: string;
+}
+
+interface SendLevelCmd extends BaseMessage {
+  key: 'send-level-cmd';
+  levelKey: string;
+  cmd: LevelDeviceCmd;
+  messageUid: string;
+}
+interface AckLevelCmd extends BaseMessage {
+  key: 'ack-level-cmd';
+  levelKey: string;
+  messageUid: string;
 }
 
 export type MessageFromOsParent = (
@@ -188,6 +201,7 @@ export type MessageFromOsParent = (
   | RequestHistoryLine
   | SaveOperatingSystem
   | EnsureLevelDevice
+  | AckLevelCmd
 );
   
 export type MessageFromOsWorker = (
@@ -202,6 +216,7 @@ export type MessageFromOsWorker = (
   | CancelVoiceCommands
   | GetAllVoices
   | SendHistoryLine
+  | SendLevelCmd
 );
 
 // Shortcut

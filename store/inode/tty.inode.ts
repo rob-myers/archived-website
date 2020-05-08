@@ -60,7 +60,7 @@ export class TtyINode extends BaseINode {
   }
 
   /**
-   * {this.def.sendSignal} will re-exec the controlling
+   * `this.def.sendSignal` will re-exec the controlling
    * process with interactive bash, cancelling previous
    * subscription and subscribing to a new one.
    * But 1st we remove the old subscription's read resolver.

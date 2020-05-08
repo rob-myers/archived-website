@@ -1,4 +1,4 @@
-import { MessageFromOsWorker, awaitWorker } from '@model/os/os.worker.model';
+import { MessageFromOsWorker } from '@model/os/os.worker.model';
 import { BaseOsClient, BaseOsClientDef } from './base-os-client';
 import { Message } from '@model/worker.model';
 
@@ -15,7 +15,7 @@ export class LevelClient extends BaseOsClient<LevelClientDef> {
     super.initialise();
     this.def.osWorker.postMessage({
       key: 'ensure-level-device',
-      levelName: this.def.levelName,
+      levelKey: this.def.levelKey,
     });
   }
 
@@ -31,5 +31,5 @@ export class LevelClient extends BaseOsClient<LevelClientDef> {
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface LevelClientDef extends BaseOsClientDef {
-  levelName: string;
+  levelKey: string;
 }

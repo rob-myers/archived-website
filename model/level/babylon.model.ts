@@ -10,10 +10,7 @@ export const babylonEngineParams: BABYLON.EngineOptions = {
   antialias: true,
 };
 
-export function loadInitialScene(
-  engine: BABYLON.Engine,
-  canvas: HTMLCanvasElement,
-) {
+export function loadInitialScene(engine: BABYLON.Engine, canvas: HTMLCanvasElement) {
   const scene = new BABYLON.Scene(engine);
   const sun = new BABYLON.HemisphericLight('sun', new BABYLON.Vector3(1, 1, 0), scene);
   sun.intensity = 0.5;
@@ -30,10 +27,38 @@ export function loadInitialScene(
   return scene;
 }
 
-export async function loadDemoSceneFromGtlf(
-  engine: BABYLON.Engine,
-  canvas: HTMLCanvasElement,
+function setupCamera(canvas: HTMLCanvasElement, scene: BABYLON.Scene) {
+  const camera = new BABYLON.UniversalCamera('uni-cam', new Vector3(0, 10, 0), scene);
+  camera.setTarget(Vector3.Zero());
+  camera.rotation.y += Math.PI; // So +x right, +z up
+  camera.minZ = 0;
+  camera.attachControl(canvas);
+  camera.inputs.removeMouse();
+  camera.inputs.removeByType('FreeCameraKeyboardMoveInput');
+  camera.inputs.add(new CustomCameraKeyboardInput(camera));
+}
+
+function createTile(
+  x: number,
+  y: number,
+  scene: BABYLON.Scene
 ) {
+  const ground = BABYLON.MeshBuilder.CreateGround(`tile-${x}-${y}`,{ width: 1, height: 1 });
+  ground.position = new BABYLON.Vector3(x + 0.5, 0, y + 0.5);
+  // ground.enableEdgesRendering();    
+  // ground.edgesWidth = 2.0;
+  // ground.edgesColor = new BABYLON.Color4(0, 0, 0, 1);
+  scene.addMesh(ground);
+}
+
+function _createDebugMaterial(scene: BABYLON.Scene) {
+  const red = new BABYLON.BackgroundMaterial('debug-material', scene);
+  red.useRGBColor = false;
+  red.primaryColor = new BABYLON.Color3(1, 0, 0);
+  return red;
+}
+
+export async function loadDemoScene(engine: BABYLON.Engine, canvas: HTMLCanvasElement) {
   BABYLON.SceneLoader.ShowLoadingScreen = false;
   try {
     const scene = await BABYLON.SceneLoader.LoadAsync('', `data:${shadowTest1Gltf}`, engine);
@@ -78,38 +103,4 @@ export async function loadDemoSceneFromGtlf(
     console.log({ error });
     return new BABYLON.Scene(engine);
   }
-}
-
-function setupCamera(
-  canvas: HTMLCanvasElement,
-  scene: BABYLON.Scene,
-) {
-  const camera = new BABYLON.UniversalCamera('uni-cam', new Vector3(0, 10, 0), scene);
-  camera.setTarget(Vector3.Zero());
-  camera.rotation.y += Math.PI; // So +x right, +z up
-  camera.minZ = 0;
-  camera.attachControl(canvas);
-  camera.inputs.removeMouse();
-  camera.inputs.removeByType('FreeCameraKeyboardMoveInput');
-  camera.inputs.add(new CustomCameraKeyboardInput(camera));
-}
-
-function createTile(
-  x: number,
-  y: number,
-  scene: BABYLON.Scene
-) {
-  const ground = BABYLON.MeshBuilder.CreateGround(`tile-${x}-${y}`,{ width: 1, height: 1 });
-  ground.position = new BABYLON.Vector3(x + 0.5, 0, y + 0.5);
-  // ground.enableEdgesRendering();    
-  // ground.edgesWidth = 2.0;
-  // ground.edgesColor = new BABYLON.Color4(0, 0, 0, 1);
-  scene.addMesh(ground);
-}
-
-function _createDebugMaterial(scene: BABYLON.Scene) {
-  const red = new BABYLON.BackgroundMaterial('debug-material', scene);
-  red.useRGBColor = false;
-  red.primaryColor = new BABYLON.Color3(1, 0, 0);
-  return red;
 }

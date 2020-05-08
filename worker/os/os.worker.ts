@@ -106,7 +106,7 @@ ctxt.addEventListener('message', async ({ data: msg }) => {
       break;
     }
     case 'ensure-level-device': {
-      dispatch(osEnsureLevelThunk({ levelName: msg.levelName }));
+      dispatch(osEnsureLevelThunk({ levelKey: msg.levelKey }));
       break;
     }
   }
