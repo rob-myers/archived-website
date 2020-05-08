@@ -1,6 +1,7 @@
 import { MessageFromOsWorker } from '@model/os/os.worker.model';
 import { BaseOsClient, BaseOsClientDef } from './base-os-client';
 import { Message } from '@model/worker.model';
+import { ExternalLevelCmd } from '@store/inode/level.inode';
 
 export class LevelClient extends BaseOsClient<LevelClientDef> {
 
@@ -18,11 +19,9 @@ export class LevelClient extends BaseOsClient<LevelClientDef> {
 
   protected onWorkerMessage = ({ data: msg }: Message<MessageFromOsWorker>) => {
     if (msg.key === 'send-level-cmd' && msg.levelKey === this.def.levelKey) {
-      
-      console.log({ receivedMsg: msg });
-      /**
-       * TODO
-       */
+      // console.log({ receivedMsg: msg });
+      this.def.runCommand(msg.cmd);
+
       this.def.osWorker.postMessage({
         key: 'ack-level-cmd',
         levelKey: msg.levelKey,
@@ -35,4 +34,5 @@ export class LevelClient extends BaseOsClient<LevelClientDef> {
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface LevelClientDef extends BaseOsClientDef {
   levelKey: string;
+  runCommand: (cmd: ExternalLevelCmd) => void;
 }

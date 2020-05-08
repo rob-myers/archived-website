@@ -8,6 +8,7 @@ import {
   babylonEngineParams, loadInitialScene } from '@model/level/babylon.model';
 import { OsWorker } from '@model/os/os.worker.model';
 import { LevelClient } from '@model/client/level.client';
+import { ExternalLevelCmd } from './inode/level.inode';
 
 export interface State {
   instance: KeyedLookup<LevelState>;
@@ -46,6 +47,12 @@ export const Thunk = {
       mesh.position = position;
     },
   ),
+  clearAll: createThunk(
+    '[Level] clear',
+    (_, __: { levelKey: string }) => {
+      // TODO
+    },
+  ),
   createLevel: createThunk(
     '[Level] create',
     async ({ dispatch, state: { level } }, { uid, canvas, osWorker }: {
@@ -59,7 +66,26 @@ export const Thunk = {
       const engine = new BABYLON.Engine(canvas, true, babylonEngineParams);
       // const scene = await loadDemoSceneFromGtlf(engine, canvas);
       const scene = loadInitialScene(engine, canvas);
-      const levelClient = new LevelClient({ osWorker, levelKey: uid });
+
+      const levelClient = new LevelClient({
+        osWorker,
+        levelKey: uid,
+        /**
+         * Enact commands originally sent from corresponding LevelINode.
+         */
+        runCommand: (cmd: ExternalLevelCmd) => {
+          switch (cmd.key) {
+            case 'clear': {
+              dispatch(Thunk.clearAll({ levelKey: uid }));
+              break;
+            }
+            case 'set-tiles': {
+              dispatch(Thunk.setTiles({ levelKey: uid, ...cmd }));
+              break;
+            }
+          }
+        },
+      });
       levelClient.initialise();
 
       dispatch(Act.registerLevel(uid, {
@@ -104,7 +130,15 @@ export const Thunk = {
         }
       }
     },
-  )
+  ),
+  setTiles: createThunk(
+    '[Level] set tiles',
+    (_, __: { levelKey: string; tiles: [number, number][]; enabled: boolean }) => {
+      /**
+       * TODO
+       */
+    },
+  ),
 };
 
 export type Thunk = ActionsUnion<typeof Thunk>;
