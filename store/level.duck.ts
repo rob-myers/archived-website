@@ -59,7 +59,6 @@ export const Thunk = {
       }
       const engine = new BABYLON.Engine(canvas, true, babylonEngineParams);
       const scene = loadInitialScene(engine, canvas);
-
       const levelClient = new LevelClient({
         osWorker,
         levelKey: uid,
@@ -71,8 +70,15 @@ export const Thunk = {
               break;
             }
             case 'set-tiles': {
-              dispatch(Thunk.setTiles({ levelKey: uid, enabled: cmd.enabled,
-                tiles: cmd.tiles.map(([x, y]) => ({ x, y, key: `${x},${y}` })),
+              const [ox, oy] = cmd.offset;
+              dispatch(Thunk.setTiles({
+                levelKey: uid,
+                enabled: cmd.enabled,
+                tiles: cmd.tiles.map(([x, y]) => ({
+                  x: x + ox,
+                  y: y + oy,
+                  key: `${x + ox},${y + oy}`,
+                })),
               }));
               break;
             }

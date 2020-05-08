@@ -73,7 +73,7 @@ export class LevelINode extends BaseINode {
 
 type LevelDeviceCmd = (
   | { key: 'clear'; what: 'all' | 'tiles' | 'walls' }
-  | { key: 'set-tiles'; tiles: [number, number][]; enabled: boolean }
+  | { key: 'set-tiles'; tiles: [number, number][]; enabled: boolean; offset: [number, number] }
   | { key: 'resolve'; resolve: () => void }
 );
 

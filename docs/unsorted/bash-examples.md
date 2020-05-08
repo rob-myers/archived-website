@@ -1,3 +1,17 @@
+## Babylon.js examples
+
+```sh
+floor {{0..2},{8..10}},{0..5..2} {1,9},{0..5} {0..10},1
+floor --clear
+floor -r {0..5},{0..2}
+
+for i in 0 4 8; do
+  floor {0..2},{{0..2},{4..6}} 1,3 -o "$i,0"
+done
+floor 3,1 7,{1,5}
+
+```
+
 ## Some slow examples
 
 ```sh

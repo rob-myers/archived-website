@@ -6,6 +6,7 @@ import { osGetLevelDeviceThunk } from '@store/os/level.os.duck';
 import { levDevVarName } from '@model/os/os.model';
 
 const coordRegex = /^(\d+),(\d+)$/;
+type StringOpts = 'o' | 'offset'
 type BooleanOpts = 'c' | 'clear' | 'r' | 'remove';
 
 /**
@@ -13,11 +14,14 @@ type BooleanOpts = 'c' | 'clear' | 'r' | 'remove';
  */
 export class FloorBinary extends BaseBinaryComposite<
   BinaryExecType.floor,
-  { string: never[]; boolean: BooleanOpts[] }
+  { string: StringOpts[]; boolean: BooleanOpts[] }
 > {
 
   public specOpts() {
-    return { string: [], boolean: ['c', 'clear', 'r', 'remove'] as BooleanOpts[] };
+    return {
+      string: ['o', 'offset'] as StringOpts[],
+      boolean: ['c', 'clear', 'r', 'remove'] as BooleanOpts[],
+    };
   }
 
   public async *semantics(dispatch: OsDispatchOverload, processKey: string): AsyncIterableIterator<ObservedType> {
@@ -31,6 +35,17 @@ export class FloorBinary extends BaseBinaryComposite<
         yield this.exit(1, `unexpected operand ${this.operands[0]}`);
       }
 
+      let offset = [0, 0] as [number, number];
+      const offsetOpt = this.opts.o || this.opts.offset;
+      if (offsetOpt) {
+        const matched = offsetOpt.match(coordRegex);
+        if (matched) {
+          offset = [Number(matched[1]), Number(matched[2])];
+        } else {
+          yield this.exit(1, `unexpected offset ${offsetOpt}`);
+        }
+      }
+
       const tiles = [] as [number, number][];
       for (const operand of this.operands) {
         const matched = operand.match(coordRegex);
@@ -42,7 +57,7 @@ export class FloorBinary extends BaseBinaryComposite<
       }
 
       const enabled = !(this.opts.r || this.opts.remove);
-      await device.run({ key: 'set-tiles', tiles, enabled });
+      await device.run({ key: 'set-tiles', tiles, enabled, offset });
 
     } else {
       yield this.exit(1, `${levDevVarName} must resolve to a level device`);
