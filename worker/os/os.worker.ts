@@ -32,6 +32,7 @@ ctxt.addEventListener('message', async ({ data: msg }) => {
       const { sessionKey, canonicalPath } = dispatch(osCreateSessionThunk({
         uiKey: msg.uiKey,
         userKey: msg.userKey,
+        env: msg.env,
       }));
       ctxt.postMessage({
         key: 'created-session',

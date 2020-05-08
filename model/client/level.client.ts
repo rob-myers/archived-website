@@ -2,9 +2,6 @@ import { MessageFromOsWorker } from '@model/os/os.worker.model';
 import { BaseOsClient, BaseOsClientDef } from './base-os-client';
 import { Message } from '@model/worker.model';
 
-/**
- * TODO
- */
 export class LevelClient extends BaseOsClient<LevelClientDef> {
 
   constructor(protected def: LevelClientDef) {
@@ -19,13 +16,19 @@ export class LevelClient extends BaseOsClient<LevelClientDef> {
     });
   }
 
-  protected onWorkerMessage = ({ data: _msg }: Message<MessageFromOsWorker>) => {
-    // switch (msg.key) {
-    //   case '__TODO__': {
-    //     //
-    //     break;
-    //   }
-    // }
+  protected onWorkerMessage = ({ data: msg }: Message<MessageFromOsWorker>) => {
+    if (msg.key === 'send-level-cmd' && msg.levelKey === this.def.levelKey) {
+      
+      console.log({ receivedMsg: msg });
+      /**
+       * TODO
+       */
+      this.def.osWorker.postMessage({
+        key: 'ack-level-cmd',
+        levelKey: msg.levelKey,
+        messageUid: msg.messageUid,
+      });
+    }
   }
 }
 

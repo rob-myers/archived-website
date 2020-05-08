@@ -1,7 +1,7 @@
 import { SigEnum } from './process.model';
 import { VoiceCommandSpeech } from '@model/client/voice.client';
 import { BaseMessage, Message } from '@model/worker.model';
-import { LevelDeviceCmd } from '@store/inode/level.inode';
+import { ExternalLevelCmd } from '@store/inode/level.inode';
 
 /** Worker in parent thread */
 export interface OsWorker extends Worker {
@@ -39,6 +39,7 @@ interface CreateSession extends BaseMessage {
   key: 'create-session';
   userKey: string;
   uiKey: string;
+  env: Record<string, string>;
 }
 /**
  * tty informs xterm about newly created session
@@ -179,7 +180,7 @@ interface EnsureLevelDevice extends BaseMessage {
 interface SendLevelCmd extends BaseMessage {
   key: 'send-level-cmd';
   levelKey: string;
-  cmd: LevelDeviceCmd;
+  cmd: ExternalLevelCmd;
   messageUid: string;
 }
 interface AckLevelCmd extends BaseMessage {

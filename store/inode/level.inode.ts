@@ -15,17 +15,15 @@ export class LevelINode extends BaseINode {
     this.nextDrainId = null;
   }
 
-  private printPending() {
+  private runPending() {
     if (this.cmdBuffer.length && !this.nextDrainId) {
-      this.nextDrainId = window.setTimeout(this.runCommands, this.def.refreshMs);
+      this.nextDrainId = (setTimeout as Window['setTimeout'])(this.runCommands, this.def.refreshMs);
     }
   }
 
   private queueCommands(cmds: LevelDeviceCmd[]) {
-    for (const cmd of cmds) {
-      this.cmdBuffer.push(cmd);
-    }
-    this.printPending();
+    for (const cmd of cmds) this.cmdBuffer.push(cmd);
+    this.runPending();
   }
 
   public read(_buffer: string[], _maxSize: number, _offset: number): number {
@@ -39,8 +37,8 @@ export class LevelINode extends BaseINode {
     this.queueCommands([cmd]);
   }
   
-  private async runCommands(cmds: LevelDeviceCmd[]) {
-    for (const cmd of cmds.splice(0, this.def.cmdsPerDrain)) {
+  private runCommands = async () => {
+    for (const cmd of this.cmdBuffer.splice(0, this.def.cmdsPerDrain)) {
       await this.def.sendLevelCmd(cmd);
 
       switch (cmd.key) {
@@ -55,6 +53,7 @@ export class LevelINode extends BaseINode {
       }
     }
     this.nextDrainId = null;
+    this.runPending();
   }
 
   public async write(buffer: string[], _offset: number) {
@@ -62,10 +61,13 @@ export class LevelINode extends BaseINode {
   }
 }
 
-export type LevelDeviceCmd = (
-  | { key: 'set-tiles'; tiles: [number, number][]; enabled: boolean }
+type LevelDeviceCmd = (
   | { key: 'clear' }
+  | { key: 'set-tiles'; tiles: [number, number][]; enabled: boolean }
 );
+export type ExternalLevelCmd = Extract<LevelDeviceCmd, {
+  key: 'set-tiles' | 'clear';
+}>
 
 export interface LevelINodeDef extends BaseINodeDef {
   cmdsPerDrain: number;

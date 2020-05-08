@@ -79,10 +79,11 @@ export const Thunk = {
     '[xterm] create session',
     async (
       { dispatch },
-      { uiKey, userKey, xterm, onCreate }: {
+      { uiKey, userKey, xterm, onCreate, env }: {
         uiKey: string;
         userKey: string;
         xterm: Redacted<Terminal>;
+        env: Record<string, string>;
         onCreate: (sessionKey: string) => void;
       }
     ) => {
@@ -90,7 +91,7 @@ export const Thunk = {
       const worker = await dispatch(Thunk.ensureGlobalSetup({}));
 
       // Create session in os worker
-      worker.postMessage({ key: 'create-session', uiKey, userKey });
+      worker.postMessage({ key: 'create-session', uiKey, userKey, env });
       const msg = await awaitWorker('created-session', worker, (msg) => msg.uiKey === uiKey);
 
       // Create TtyXterm, initialise and register

@@ -2,7 +2,7 @@ import { generate } from 'shortid';
 import { OsAct, levDevVarName } from '@model/os/os.model';
 import { createOsThunk, OsThunkAct } from '@model/os/os.redux.model';
 import { osMountFileAct, osResolvePathThunk } from './file.os.duck';
-import { LevelINode, LevelDeviceCmd } from '@store/inode/level.inode';
+import { LevelINode, ExternalLevelCmd } from '@store/inode/level.inode';
 import { DirectoryINode } from '@store/inode/directory.inode';
 import { osLookupVarThunk } from './declare.os.duck';
 import { awaitParent } from '@model/os/os.worker.model';
@@ -23,7 +23,7 @@ export const osEnsureLevelThunk = createOsThunk<OsAct, EnsureLevelThunk>(
         groupKey: 'root',
         cmdsPerDrain: 10,
         refreshMs: 10,
-        sendLevelCmd: async (cmd: LevelDeviceCmd) => {
+        sendLevelCmd: async (cmd: ExternalLevelCmd) => {
           const messageUid = `msg-${generate()}`;
           worker.postMessage({ key: 'send-level-cmd', levelKey, cmd, messageUid });
           await awaitParent('ack-level-cmd', worker, ({ messageUid: other }) => other === messageUid);

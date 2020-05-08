@@ -12,7 +12,11 @@ const XTermWithoutSsr: typeof XTermComponent = dynamic(
   { ssr: false },
 ) as any;
 
-export const Session: React.FC<Props> = ({ uid, userKey }) => {
+export const Session: React.FC<Props> = ({
+  uid,
+  userKey,
+  env = {},
+}) => {
   const dispatch = useDispatch();
   const sessionKeyRef = useRef<string>();
 
@@ -43,6 +47,7 @@ export const Session: React.FC<Props> = ({ uid, userKey }) => {
             uiKey: uid,
             userKey,
             xterm: redact(xterm),
+            env,
             onCreate: (sessionKey) => sessionKeyRef.current = sessionKey,
           }));
         }}
@@ -66,4 +71,6 @@ interface Props {
   userKey: string;
   /** If other UI closes this, we can tidy away session. */
   uid: string;
+  /** Can set initial environment variables */
+  env?: Record<string, string>;
 }

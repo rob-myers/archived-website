@@ -11,6 +11,7 @@ import { osOpenFileThunk, osUnlinkFileThunk } from './file.os.duck';
 import { osSetProcessUserThunk, osCreateUserThunk } from './user.os.duck';
 import { ensureArrayItem, last } from '@model/generic.model';
 import { isInteractiveShell, findAncestralTerm, isBash } from '@os-service/term.util';
+import { osAssignVarThunk } from './declare.os.duck';
 
 /**
  * Session for login or daemon.
@@ -198,9 +199,9 @@ export type Thunk = (
  */
 export const osCreateSessionThunk = createOsThunk<OsAct, CreateSessionThunk>(
   OsAct.OS_CREATE_SESSION_THUNK,
-  ({ dispatch, service, state }, { uiKey, userKey }) => {
+  ({ dispatch, service, state }, { uiKey, userKey, env }) => {
 
-    // Ensure user (not a prerequisite)
+    // Ensure user
     !state.os.user[userKey] && dispatch(osCreateUserThunk({ userKey, groupKeys: [] }));
 
     // Create TTY device
@@ -213,12 +214,17 @@ export const osCreateSessionThunk = createOsThunk<OsAct, CreateSessionThunk>(
     dispatch(osOpenFileThunk({ processKey, request: { path: canonicalPath, mode: 'WRONLY' } }));
     dispatch(osOpenFileThunk({ processKey, request: { path: canonicalPath, mode: 'WRONLY' } }));
     dispatch(osSetProcessUserThunk({ processKey, userKey }));
+
+    // Ensure environment
+    for (const [varName, value] of Object.entries(env)) {
+      dispatch(osAssignVarThunk({ processKey, varName, act: { key: 'default', value }, exported: true }));
+    }
     
     // Register new session
     const processGroupKey = processKey;
     dispatch(osRegisterSessionAct({ uiKey: uiKey, processKey, processGroupKey, sessionKey, ttyINode, ttyPath: canonicalPath, userKey }));
     
-    // Controlling process has own process group and runs interactive bash
+    // Controlling process has own process group, runs interactive bash
     dispatch(osSetProcessGroupAct({ processKey, processGroupKey }));
     const bashTerm = service.term.createBinary({ binaryKey: BinaryExecType.bash, args: []});
     dispatch(osExecTermThunk({ processKey, term: bashTerm, command: '-bash' }));
@@ -231,6 +237,7 @@ interface CreateSessionThunk extends OsThunkAct<OsAct, {
   /** So can close session on ui close, if needed */
   uiKey: string;
   userKey: string;
+  env: Record<string, string>;
 },
 // Outputs a session key.
 { sessionKey: string; canonicalPath: string }
